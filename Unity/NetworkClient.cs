@@ -13,6 +13,7 @@ namespace Kalkatos.Network.Unity
 		public static NetworkClient Instance;
 
 		private INetworkClient _networkClient = new AzureFunctionsNetworkClient();
+		private string _playerId;
 
 		private void Awake ()
 		{
@@ -32,7 +33,8 @@ namespace Kalkatos.Network.Unity
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
-					onSuccess.Invoke(response.IsNewUser);
+					Instance._playerId = response.PlayerId;
+					onSuccess.Invoke(response.IsAuthenticated);
 				},
 				(failure) =>
 				{

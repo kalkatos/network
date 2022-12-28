@@ -73,7 +73,7 @@ namespace Kalkatos.Network.Specific
 				var response = await _httpClient.PostAsync(
 					//"https://kalkatos-games.azurewebsites.net/api/LogIn?code=DL6gIZIRhvoYe7OBizrkqfImdvJxcxXvRy0j8BNCzCvtAzFuJ9Lpbg==",
 					"http://localhost:7089/api/LogIn",
-					new StringContent(""));//(string)parameter));
+					new StringContent((string)parameter));
 				string result = await response.Content.ReadAsStringAsync();
 				if (response.IsSuccessStatusCode)
 				{
@@ -82,7 +82,7 @@ namespace Kalkatos.Network.Specific
 				}
 				else
 				{
-					NetworkError error = JsonConvert.DeserializeObject<NetworkError>(result);
+					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
 					onFailure?.Invoke(error);
 				}
 			}
