@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
 using Kalkatos.FunctionsGame.Models;
 using Kalkatos.Network.Model;
 using Kalkatos.UnityGame.Systems;
 using Newtonsoft.Json;
-using UnityEditor.PackageManager.Requests;
 
 namespace Kalkatos.Network.Specific
 {
@@ -33,19 +29,35 @@ namespace Kalkatos.Network.Specific
 		public void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			Initialize();
-			if (parameter == null)
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null, it must be an identifier string to connect." });
-				return;
-			}
 
-			if (!(parameter is string))
+			NetworkError error = new NetworkError();
+			if (!CheckNullParameter(parameter, ref error))
 			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not a string with an identifier." });
-				return;
+				onFailure?.Invoke(error);
+				return; 
 			}
-
+			
 			_ = ConnectAsync(parameter, onSuccess, onFailure);
+		}
+
+		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		{
+			NetworkError error = new NetworkError();
+			if (!CheckNullParameter(parameter, ref error))
+			{
+				onFailure?.Invoke(error);
+				return;
+			}
+		}
+
+		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		{
+			NetworkError error = new NetworkError();
+			if (!CheckNullParameter(parameter, ref error))
+			{
+				onFailure?.Invoke(error);
+				return;
+			}
 		}
 
 		public void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -66,6 +78,23 @@ namespace Kalkatos.Network.Specific
 			_httpClient.Timeout = TimeSpan.FromSeconds(5);
 		}
 
+		public bool CheckNullParameter (object parameter, ref NetworkError networkError)
+		{
+			if (parameter == null)
+			{
+				networkError = new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null, it must be an identifier string to connect." };
+				return false;
+			}
+
+			if (!(parameter is string))
+			{
+				networkError = new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not a string with an identifier." };
+				return false;
+			}
+
+			return true;
+		}
+
 		private async Task ConnectAsync (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
@@ -79,6 +108,32 @@ namespace Kalkatos.Network.Specific
 				{
 					LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 					onSuccess?.Invoke(loginResponse);
+				}
+				else
+				{
+					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
+					onFailure?.Invoke(error);
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.LogError(e.Message);
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
+			}
+		}
+
+		private async Task FindMatchAsync (string playerId, Action<object> onSuccess, Action<object> onFailure)
+		{
+			try
+			{
+				var response = await _httpClient.PostAsync(
+					//"https://kalkatos-games.azurewebsites.net/api/FindMatch?code=",
+					"http://localhost:7089/api/FindMatch",
+					new StringContent(playerId));
+				string result = await response.Content.ReadAsStringAsync();
+				if (response.IsSuccessStatusCode)
+				{
+					// TODO result (matchmaking ticket)
 				}
 				else
 				{
