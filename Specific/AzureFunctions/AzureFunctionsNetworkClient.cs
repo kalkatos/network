@@ -48,6 +48,8 @@ namespace Kalkatos.Network.Specific
 				onFailure?.Invoke(error);
 				return;
 			}
+
+			_ = FindMatchAsync((string)parameter, onSuccess, onFailure);
 		}
 
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -133,7 +135,7 @@ namespace Kalkatos.Network.Specific
 				string result = await response.Content.ReadAsStringAsync();
 				if (response.IsSuccessStatusCode)
 				{
-					// TODO result (matchmaking ticket)
+					onSuccess?.Invoke(null);
 				}
 				else
 				{

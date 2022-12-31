@@ -49,7 +49,7 @@ namespace Kalkatos.Network.Unity
 			_networkClient.FindMatch(_playerId,
 				(success) =>
 				{
-					// TODO Find Match
+					onSuccess?.Invoke("Success");
 				},
 				(failure) =>
 				{
