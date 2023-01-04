@@ -3,6 +3,9 @@ using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
+#if PARREL_SYNC
+using ParrelSync;
+#endif
 
 namespace Kalkatos.Network.Unity
 {
@@ -18,7 +21,11 @@ namespace Kalkatos.Network.Unity
 		/// <param name="onFailure"> <typeparamref name="NetworkError"/> with info on what happened. </param>
 		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
 		{
+#if PARREL_SYNC
+			string deviceId = SystemInfo.deviceUniqueIdentifier + (ClonesManager.IsClone() ? ClonesManager.GetArgument() : "");
+#else
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
+#endif
 			// Invoke network
 			_networkClient.Connect(deviceId,
 				(success) =>
