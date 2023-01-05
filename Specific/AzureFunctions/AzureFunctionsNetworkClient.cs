@@ -23,9 +23,9 @@ namespace Kalkatos.Network.Specific
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="parameter">A string with a device identifier.</param>
-		/// <param name="onSuccess">A <typeparamref name="LoginResponse"/> with info on the connection.</param>
-		/// <param name="onFailure">A <typeparamref name="NetworkError"/> with the reason it did not connect.</param>
+		/// <param screenName="parameter">A string with a device identifier.</param>
+		/// <param screenName="onSuccess">A <typeparamref screenName="LoginResponse"/> with info on the connection.</param>
+		/// <param screenName="onFailure">A <typeparamref screenName="NetworkError"/> with the reason it did not connect.</param>
 		public void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			Initialize();

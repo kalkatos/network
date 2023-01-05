@@ -3,9 +3,7 @@ using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
-#if PARREL_SYNC
-using ParrelSync;
-#endif
+using Kalkatos.UnityGame.Systems;
 
 namespace Kalkatos.Network.Unity
 {
@@ -13,21 +11,37 @@ namespace Kalkatos.Network.Unity
 	{
 		private static INetworkClient _networkClient = new AzureFunctionsNetworkClient();
 		private static string _playerId;
+		private static string _localTestToken;
+
+		private void OnDestroy ()
+		{
+			Storage.Save("LocalTester" + _localTestToken, 0);
+		}
 
 		/// <summary>
 		/// Invokes the connect method on the Network interface.
 		/// </summary>
-		/// <param name="onSuccess"> True if it's new user </param>
-		/// <param name="onFailure"> <typeparamref name="NetworkError"/> with info on what happened. </param>
+		/// <param screenName="onSuccess"> True if it's new user </param>
+		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
 		{
-#if PARREL_SYNC
-			string deviceId = SystemInfo.deviceUniqueIdentifier + (ClonesManager.IsClone() ? ClonesManager.GetArgument() : "");
-#else
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
-#endif
+
+			// Local test token
+			_localTestToken = "";
+			for (int i = 0; i < 10; i++)
+			{
+				if (Storage.Load("LocalTester" + i, 0) == 0)
+				{
+					Storage.Save("LocalTester" + i, 1);
+					if (i > 0)
+						_localTestToken = i.ToString();
+					break;
+				}
+			}
+
 			// Invoke network
-			_networkClient.Connect(deviceId,
+			_networkClient.Connect(deviceId + _localTestToken,
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
@@ -44,8 +58,8 @@ namespace Kalkatos.Network.Unity
 		/// <summary>
 		/// Tries to find a match.
 		/// </summary>
-		/// <param name="onSuccess"> String with the matchmaking ticket. </param>
-		/// <param name="onFailure"> <typeparamref name="NetworkError"/> with info on what happened. </param>
+		/// <param screenName="onSuccess"> String with the matchmaking ticket. </param>
+		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (string.IsNullOrEmpty(_playerId))
