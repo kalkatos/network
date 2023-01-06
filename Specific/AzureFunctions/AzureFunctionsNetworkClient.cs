@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.FunctionsGame.Models;
 using Kalkatos.Network.Model;
-using Kalkatos.UnityGame.Systems;
 using Newtonsoft.Json;
 
 namespace Kalkatos.Network.Specific

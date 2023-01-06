@@ -3,7 +3,6 @@ using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
-using Kalkatos.UnityGame.Systems;
 
 namespace Kalkatos.Network.Unity
 {
