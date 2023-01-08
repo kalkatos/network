@@ -8,13 +8,29 @@ namespace Kalkatos.Network.Unity
 {
 	public class NetworkClient : MonoBehaviour
 	{
-		private static INetworkClient _networkClient = new AzureFunctionsNetworkClient();
-		private static string _playerId;
-		private static string _localTestToken;
+		private static NetworkClient instance;
+		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
+		private static string playerId;
+		private static string localTestToken;
+
+		public static bool IsConnected => networkClient.IsConnected;
+
+		private void Awake ()
+		{
+			if (instance == null)
+				instance = this;
+			else if (instance != this)
+			{
+				Destroy(this);
+				return;
+			}
+
+			DontDestroyOnLoad(this);
+		}
 
 		private void OnDestroy ()
 		{
-			Storage.Save("LocalTester" + _localTestToken, 0);
+			Storage.Save("LocalTester" + localTestToken, 0);
 		}
 
 		/// <summary>
@@ -27,24 +43,24 @@ namespace Kalkatos.Network.Unity
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
 
 			// Local test token
-			_localTestToken = "";
+			localTestToken = "";
 			for (int i = 0; i < 10; i++)
 			{
 				if (Storage.Load("LocalTester" + i, 0) == 0)
 				{
 					Storage.Save("LocalTester" + i, 1);
 					if (i > 0)
-						_localTestToken = i.ToString();
+						localTestToken = i.ToString();
 					break;
 				}
 			}
 
 			// Invoke network
-			_networkClient.Connect(deviceId + _localTestToken,
+			networkClient.Connect(deviceId + localTestToken,
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
-					_playerId = response.PlayerId;
+					playerId = response.PlayerId;
 					onSuccess?.Invoke(response.IsAuthenticated);
 				},
 				(failure) =>
@@ -61,12 +77,12 @@ namespace Kalkatos.Network.Unity
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
-			if (string.IsNullOrEmpty(_playerId))
+			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
-			_networkClient.FindMatch(_playerId,
+			networkClient.FindMatch(playerId,
 				(success) =>
 				{
 					onSuccess?.Invoke("Success");

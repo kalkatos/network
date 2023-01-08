@@ -16,8 +16,8 @@ namespace Kalkatos.Network.Specific
 		public PlayerInfo[] Players { get; set; }
 		public PlayerInfo MyInfo { get; set; }
 
-		private bool _isInitialized = false;
-		private HttpClient _httpClient = new HttpClient();
+		private bool isInitialized = false;
+		private HttpClient httpClient = new HttpClient();
 
 		/// <summary>
 		/// 
@@ -73,10 +73,10 @@ namespace Kalkatos.Network.Specific
 
 		private void Initialize ()
 		{
-			if (_isInitialized)
+			if (isInitialized)
 				return;
-			_isInitialized = true;
-			_httpClient.Timeout = TimeSpan.FromSeconds(5);
+			isInitialized = true;
+			httpClient.Timeout = TimeSpan.FromSeconds(5);
 		}
 
 		public bool CheckNullParameter (object parameter, ref NetworkError networkError)
@@ -100,7 +100,7 @@ namespace Kalkatos.Network.Specific
 		{
 			try
 			{
-				var response = await _httpClient.PostAsync(
+				var response = await httpClient.PostAsync(
 					//"https://kalkatos-games.azurewebsites.net/api/LogIn?code=DL6gIZIRhvoYe7OBizrkqfImdvJxcxXvRy0j8BNCzCvtAzFuJ9Lpbg==",
 					"http://localhost:7089/api/LogIn",
 					new StringContent((string)parameter));
@@ -108,6 +108,7 @@ namespace Kalkatos.Network.Specific
 				if (response.IsSuccessStatusCode)
 				{
 					LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
+					IsConnected = true;
 					onSuccess?.Invoke(loginResponse);
 				}
 				else
@@ -118,7 +119,7 @@ namespace Kalkatos.Network.Specific
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.Message);
+				Logger.LogError(e.ToString());
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 		}
@@ -127,7 +128,7 @@ namespace Kalkatos.Network.Specific
 		{
 			try
 			{
-				var response = await _httpClient.PostAsync(
+				var response = await httpClient.PostAsync(
 					//"https://kalkatos-games.azurewebsites.net/api/FindMatch?code=",
 					"http://localhost:7089/api/FindMatch",
 					new StringContent(playerId));
@@ -144,7 +145,7 @@ namespace Kalkatos.Network.Specific
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.Message);
+				Logger.LogError(e.ToString());
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 		}
