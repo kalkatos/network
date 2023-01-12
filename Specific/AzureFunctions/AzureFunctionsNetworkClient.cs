@@ -11,13 +11,17 @@ namespace Kalkatos.Network.Specific
 	{
 		public event Action<byte, object> OnEventReceived;
 
-		public bool IsConnected { get; set; }
-		public bool IsInRoom { get; set; }
-		public PlayerInfo[] Players { get; set; }
-		public PlayerInfo MyInfo { get; set; }
-
 		private bool isInitialized = false;
 		private HttpClient httpClient = new HttpClient();
+		private string currentRoomAlias;
+		private DateTime lastCheckMatchTime;
+		private int delayBetweenChecks = 5;
+
+		public bool IsConnected { get; private set; }
+		public bool IsInRoom { get; private set; }
+		public PlayerInfo[] Players { get; private set; }
+		public PlayerInfo MyInfo { get; private set; }
+		public RoomInfo RoomInfo { get; private set; }
 
 		/// <summary>
 		/// 
@@ -30,19 +34,19 @@ namespace Kalkatos.Network.Specific
 			Initialize();
 
 			NetworkError error = new NetworkError();
-			if (!CheckNullParameter(parameter, ref error))
+			if (!CheckParameter(parameter, Type.GetTypeCode(typeof(PlayerConnectInfo)), ref error))
 			{
 				onFailure?.Invoke(error);
-				return; 
+				return;
 			}
-			
-			_ = ConnectAsync(parameter, onSuccess, onFailure);
+
+			_ = ConnectAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
 		}
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			NetworkError error = new NetworkError();
-			if (!CheckNullParameter(parameter, ref error))
+			if (!CheckParameter(parameter, TypeCode.String, ref error))
 			{
 				onFailure?.Invoke(error);
 				return;
@@ -54,11 +58,23 @@ namespace Kalkatos.Network.Specific
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			NetworkError error = new NetworkError();
-			if (!CheckNullParameter(parameter, ref error))
+			if (!CheckParameter(parameter, TypeCode.String, ref error))
 			{
 				onFailure?.Invoke(error);
 				return;
 			}
+		}
+
+		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		{
+			NetworkError error = new NetworkError();
+			if (!CheckParameter(parameter, TypeCode.String, ref error))
+			{
+				onFailure?.Invoke(error);
+				return;
+			}
+
+			_ = GetMatchAsync((string)parameter, onSuccess, onFailure);
 		}
 
 		public void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -79,7 +95,7 @@ namespace Kalkatos.Network.Specific
 			httpClient.Timeout = TimeSpan.FromSeconds(5);
 		}
 
-		public bool CheckNullParameter (object parameter, ref NetworkError networkError)
+		public bool CheckParameter (object parameter, TypeCode type, ref NetworkError networkError)
 		{
 			if (parameter == null)
 			{
@@ -87,23 +103,23 @@ namespace Kalkatos.Network.Specific
 				return false;
 			}
 
-			if (!(parameter is string))
+			if (Type.GetTypeCode(parameter.GetType()) != type)
 			{
-				networkError = new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not a string with an identifier." };
+				networkError = new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." };
 				return false;
 			}
 
 			return true;
 		}
 
-		private async Task ConnectAsync (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		private async Task ConnectAsync (string connectInfoSerialized, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
 				var response = await httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/LogIn?code=DL6gIZIRhvoYe7OBizrkqfImdvJxcxXvRy0j8BNCzCvtAzFuJ9Lpbg==",
+					//"https://kalkatos-games.azurewebsites.net/api/LogIn",
 					"http://localhost:7089/api/LogIn",
-					new StringContent((string)parameter));
+					new StringContent(connectInfoSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				if (response.IsSuccessStatusCode)
 				{
@@ -129,13 +145,14 @@ namespace Kalkatos.Network.Specific
 			try
 			{
 				var response = await httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/FindMatch?code=",
+					//"https://kalkatos-games.azurewebsites.net/api/FindMatch",
 					"http://localhost:7089/api/FindMatch",
 					new StringContent(playerId));
 				string result = await response.Content.ReadAsStringAsync();
 				if (response.IsSuccessStatusCode)
 				{
 					onSuccess?.Invoke(null);
+					lastCheckMatchTime = DateTime.UtcNow;
 				}
 				else
 				{
@@ -147,6 +164,43 @@ namespace Kalkatos.Network.Specific
 			{
 				Logger.LogError(e.ToString());
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
+			}
+
+			await Task.Delay(delayBetweenChecks * 1000);
+			_ = GetMatchAsync(playerId, null, null);
+		}
+
+		private async Task GetMatchAsync (string playerId, Action<object> onSuccess, Action<object> onFailure)
+		{
+			// Wait if the last GetMatch were made not long ago
+			// TODO Wait full time only if it's the first get after FindMatch, otherwise, wait just 1 or 2 seconds
+			double timeSinceLastCheckMatch = (DateTime.UtcNow - lastCheckMatchTime).TotalSeconds;
+			if (timeSinceLastCheckMatch < delayBetweenChecks)
+				await Task.Delay((int)(delayBetweenChecks - timeSinceLastCheckMatch) * 1000);
+			lastCheckMatchTime = DateTime.UtcNow;
+
+			try
+			{
+				var response = await httpClient.PostAsync(
+				//"https://kalkatos-games.azurewebsites.net/api/GetMatch",
+				"http://localhost:7089/api/GetMatch",
+				new StringContent(playerId));
+				string result = await response.Content.ReadAsStringAsync();
+				if (!string.IsNullOrEmpty(result))
+				{
+					RoomInfo? info = JsonConvert.DeserializeObject<RoomInfo?>(result);
+					if (info.HasValue)
+						RoomInfo = info.Value;
+				}
+				if (string.IsNullOrEmpty(RoomInfo.RoomId))
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "No match found for this client." });
+				else
+					onSuccess?.Invoke(RoomInfo);
+			}
+			catch (Exception e)
+			{
+				Logger.LogError(e.ToString());
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match." });
 			}
 		}
 

@@ -11,10 +11,12 @@ namespace Kalkatos.Network
 		bool IsInRoom { get; }
 		PlayerInfo[] Players { get; }
 		PlayerInfo MyInfo { get; }
+		RoomInfo RoomInfo { get; }
 
 		void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
+		void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void Post (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
 	}

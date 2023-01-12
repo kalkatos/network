@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
+using System.Threading;
 
 namespace Kalkatos.Network.Unity
 {
@@ -11,6 +13,7 @@ namespace Kalkatos.Network.Unity
 		private static NetworkClient instance;
 		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
 		private static string playerId;
+		private static string playerRegion;
 		private static string localTestToken;
 
 		public static bool IsConnected => networkClient.IsConnected;
@@ -33,6 +36,23 @@ namespace Kalkatos.Network.Unity
 			Storage.Save("LocalTester" + localTestToken, 0);
 		}
 
+		private static IEnumerator FetchRoomCoroutine (Action<RoomInfo> onSuccess, Action<NetworkError> onFailure, float timeout)
+		{
+			float startTime = Time.time;
+			bool isTimedOut = false;
+			bool isValidRoom = !string.IsNullOrEmpty(networkClient.RoomInfo.RoomId);
+			while (!isValidRoom && !isTimedOut)
+			{
+				isValidRoom = !string.IsNullOrEmpty(networkClient.RoomInfo.RoomId);
+				isTimedOut = Time.time - startTime > timeout;
+				yield return null;
+			}
+			if (isValidRoom)
+				onSuccess?.Invoke(networkClient.RoomInfo);
+			else
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "Couldn't find any room." });
+		}
+
 		/// <summary>
 		/// Invokes the connect method on the Network interface.
 		/// </summary>
@@ -41,6 +61,9 @@ namespace Kalkatos.Network.Unity
 		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
 		{
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
+
+			// TODO Get player region
+			playerRegion = "US";
 
 			// Local test token
 			localTestToken = "";
@@ -56,7 +79,7 @@ namespace Kalkatos.Network.Unity
 			}
 
 			// Invoke network
-			networkClient.Connect(deviceId + localTestToken,
+			networkClient.Connect(new PlayerConnectInfo { Identifier = deviceId + localTestToken, Region = playerRegion },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
@@ -91,6 +114,21 @@ namespace Kalkatos.Network.Unity
 				{
 					onFailure?.Invoke((NetworkError)failure);
 				});
+		}
+
+		public static void FetchRoomInfo (Action<RoomInfo> onSuccess, Action<NetworkError> onFailure, float timeout = 10.0f)
+		{
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
+
+			RoomInfo roomInfo = networkClient.RoomInfo;
+			if (string.IsNullOrEmpty(roomInfo.RoomId))
+				instance.StartCoroutine(FetchRoomCoroutine(onSuccess, onFailure, timeout));
+			else
+				onSuccess?.Invoke(roomInfo);
 		}
 	}
 }
