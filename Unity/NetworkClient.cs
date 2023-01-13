@@ -4,7 +4,7 @@ using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
-using System.Threading;
+using Random = UnityEngine.Random;
 
 namespace Kalkatos.Network.Unity
 {
@@ -14,6 +14,7 @@ namespace Kalkatos.Network.Unity
 		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
 		private static string playerId;
 		private static string playerRegion;
+		private static string nickname;
 		private static string localTestToken;
 
 		public static bool IsConnected => networkClient.IsConnected;
@@ -53,6 +54,24 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "Couldn't find any room." });
 		}
 
+		private static string RandomName (int length)
+		{
+			string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
+			string consonantsLower = "bcdfghjklmnpqrstvwxz";
+			string vowels = "aeiouy";
+			string result = "";
+			for (int i = 0; i < length; i++)
+			{
+				if (i == 0)
+					result += consonantsUpper[Random.Range(0, consonantsUpper.Length)];
+				else if (i % 2 == 0)
+					result += consonantsLower[Random.Range(0, consonantsLower.Length)];
+				else
+					result += vowels[Random.Range(0, vowels.Length)];
+			}
+			return result;
+		}
+
 		/// <summary>
 		/// Invokes the connect method on the Network interface.
 		/// </summary>
@@ -64,6 +83,9 @@ namespace Kalkatos.Network.Unity
 
 			// TODO Get player region
 			playerRegion = "US";
+
+			// TODO Ask for player nickname or get it somewhere
+			nickname = Storage.Load("Nickname", "Guest-" + RandomName(6));
 
 			// Local test token
 			localTestToken = "";
@@ -79,7 +101,7 @@ namespace Kalkatos.Network.Unity
 			}
 
 			// Invoke network
-			networkClient.Connect(new PlayerConnectInfo { Identifier = deviceId + localTestToken, Region = playerRegion },
+			networkClient.Connect(new PlayerConnectInfo { Identifier = deviceId + localTestToken, Region = playerRegion, Nickname = nickname },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
