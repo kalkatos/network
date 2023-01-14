@@ -13,10 +13,10 @@ namespace Kalkatos.Network.Specific
 
 		private bool isInitialized = false;
 		private HttpClient httpClient = new HttpClient();
-		private string currentRoomAlias;
 		private DateTime lastCheckMatchTime;
 		private int delayBetweenChecks = 5;
 
+		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
 		public bool IsInRoom { get; private set; }
 		public PlayerInfo[] Players { get; private set; }
@@ -32,49 +32,48 @@ namespace Kalkatos.Network.Specific
 		public void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			Initialize();
-
 			NetworkError error = new NetworkError();
 			if (!CheckParameter(parameter, Type.GetTypeCode(typeof(PlayerConnectInfo)), ref error))
 			{
 				onFailure?.Invoke(error);
 				return;
 			}
-
 			_ = ConnectAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
+		}
+
+		public void SetNickname (string nickname)
+		{
+			if (!IsConnected)
+			{
+				Logger.LogError("Not connected.");
+				return;
+			}
+			Initialize();
+
+			PlayerConnectInfo newInfo = new PlayerConnectInfo
+			{
+				Identifier = MyId,
+				Nickname = nickname
+			};
+			_ = httpClient.PostAsync(
+					//"https://kalkatos-games.azurewebsites.net/api/SetNickname",
+					"http://localhost:7089/api/SetNickname",
+					new StringContent(JsonConvert.SerializeObject(newInfo)));
 		}
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			NetworkError error = new NetworkError();
-			if (!CheckParameter(parameter, TypeCode.String, ref error))
-			{
-				onFailure?.Invoke(error);
-				return;
-			}
-
-			_ = FindMatchAsync((string)parameter, onSuccess, onFailure);
+			_ = FindMatchAsync(onSuccess, onFailure);
 		}
 
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			NetworkError error = new NetworkError();
-			if (!CheckParameter(parameter, TypeCode.String, ref error))
-			{
-				onFailure?.Invoke(error);
-				return;
-			}
+
 		}
 
 		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			NetworkError error = new NetworkError();
-			if (!CheckParameter(parameter, TypeCode.String, ref error))
-			{
-				onFailure?.Invoke(error);
-				return;
-			}
-
-			_ = GetMatchAsync((string)parameter, onSuccess, onFailure);
+			_ = GetMatchAsync(onSuccess, onFailure);
 		}
 
 		public void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -95,7 +94,7 @@ namespace Kalkatos.Network.Specific
 			httpClient.Timeout = TimeSpan.FromSeconds(5);
 		}
 
-		public bool CheckParameter (object parameter, TypeCode type, ref NetworkError networkError)
+		private bool CheckParameter (object parameter, TypeCode type, ref NetworkError networkError)
 		{
 			if (parameter == null)
 			{
@@ -125,6 +124,12 @@ namespace Kalkatos.Network.Specific
 				{
 					LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 					IsConnected = true;
+					MyId = loginResponse.PlayerId;
+					MyInfo = new PlayerInfo
+					{
+						Alias = loginResponse.PlayerAlias,
+						Nickname = loginResponse.SavedNickname,
+					};
 					onSuccess?.Invoke(loginResponse);
 				}
 				else
@@ -140,14 +145,14 @@ namespace Kalkatos.Network.Specific
 			}
 		}
 
-		private async Task FindMatchAsync (string playerId, Action<object> onSuccess, Action<object> onFailure)
+		private async Task FindMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
 				var response = await httpClient.PostAsync(
 					//"https://kalkatos-games.azurewebsites.net/api/FindMatch",
 					"http://localhost:7089/api/FindMatch",
-					new StringContent(playerId));
+					new StringContent(MyId));
 				string result = await response.Content.ReadAsStringAsync();
 				if (response.IsSuccessStatusCode)
 				{
@@ -167,10 +172,10 @@ namespace Kalkatos.Network.Specific
 			}
 
 			await Task.Delay(delayBetweenChecks * 1000);
-			_ = GetMatchAsync(playerId, null, null);
+			_ = GetMatchAsync(null, null);
 		}
 
-		private async Task GetMatchAsync (string playerId, Action<object> onSuccess, Action<object> onFailure)
+		private async Task GetMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
 			// Wait if the last GetMatch were made not long ago
 			// TODO Wait full time only if it's the first get after FindMatch, otherwise, wait just 1 or 2 seconds
@@ -184,7 +189,7 @@ namespace Kalkatos.Network.Specific
 				var response = await httpClient.PostAsync(
 				//"https://kalkatos-games.azurewebsites.net/api/GetMatch",
 				"http://localhost:7089/api/GetMatch",
-				new StringContent(playerId));
+				new StringContent(MyId));
 				string result = await response.Content.ReadAsStringAsync();
 				if (!string.IsNullOrEmpty(result))
 				{

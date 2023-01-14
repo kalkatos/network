@@ -5,6 +5,7 @@ using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
 using Random = UnityEngine.Random;
+using System.Runtime.CompilerServices;
 
 namespace Kalkatos.Network.Unity
 {
@@ -30,6 +31,9 @@ namespace Kalkatos.Network.Unity
 			}
 
 			DontDestroyOnLoad(this);
+			nickname = Storage.Load("Nickname", "");
+			if (string.IsNullOrEmpty(nickname))
+				nickname = "Guest-" + RandomName(6);
 		}
 
 		private void OnDestroy ()
@@ -72,6 +76,14 @@ namespace Kalkatos.Network.Unity
 			return result;
 		}
 
+		public static void SetNickname (string nick)
+		{
+			nickname = nick;
+			if (IsConnected)
+				networkClient.SetNickname(nick);
+			Storage.Save("Nickname", nick);
+		}
+
 		/// <summary>
 		/// Invokes the connect method on the Network interface.
 		/// </summary>
@@ -89,16 +101,21 @@ namespace Kalkatos.Network.Unity
 
 			// Local test token
 			localTestToken = "";
-			for (int i = 0; i < 10; i++)
+			if (Storage.Load("LocalTester", 0) > 0)
 			{
-				if (Storage.Load("LocalTester" + i, 0) == 0)
+				for (int i = 1; i < 10; i++)
 				{
-					Storage.Save("LocalTester" + i, 1);
-					if (i > 0)
-						localTestToken = i.ToString();
-					break;
+					if (Storage.Load("LocalTester" + i, 0) == 0)
+					{
+						Storage.Save("LocalTester" + i, 1);
+						if (i > 0)
+							localTestToken = i.ToString();
+						break;
+					}
 				}
 			}
+			else
+				Storage.Save("LocalTester", 1);
 
 			// Invoke network
 			networkClient.Connect(new PlayerConnectInfo { Identifier = deviceId + localTestToken, Region = playerRegion, Nickname = nickname },
@@ -106,6 +123,7 @@ namespace Kalkatos.Network.Unity
 				{
 					LoginResponse response = (LoginResponse)success;
 					playerId = response.PlayerId;
+					nickname = response.SavedNickname;
 					onSuccess?.Invoke(response.IsAuthenticated);
 				},
 				(failure) =>
@@ -127,7 +145,7 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
-			networkClient.FindMatch(playerId,
+			networkClient.FindMatch(null,
 				(success) =>
 				{
 					onSuccess?.Invoke("Success");
