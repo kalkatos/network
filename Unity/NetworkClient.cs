@@ -5,7 +5,6 @@ using Kalkatos.Network.Model;
 using UnityEngine;
 using Kalkatos.FunctionsGame.Models;
 using Random = UnityEngine.Random;
-using System.Runtime.CompilerServices;
 
 namespace Kalkatos.Network.Unity
 {
@@ -76,12 +75,22 @@ namespace Kalkatos.Network.Unity
 			return result;
 		}
 
-		public static void SetNickname (string nick)
+		private static void SaveNicknameLocally (string nick)
 		{
 			nickname = nick;
+			Storage.Save("Nickname", nick);
+		}
+
+		private static void SendNicknameToServer (string nick)
+		{
 			if (IsConnected)
 				networkClient.SetNickname(nick);
-			Storage.Save("Nickname", nick);
+		}
+
+		public static void SetNickname (string nick)
+		{
+			SaveNicknameLocally(nick);
+			SendNicknameToServer(nick);
 		}
 
 		/// <summary>
@@ -118,12 +127,12 @@ namespace Kalkatos.Network.Unity
 				Storage.Save("LocalTester", 1);
 
 			// Invoke network
-			networkClient.Connect(new PlayerConnectInfo { Identifier = deviceId + localTestToken, Region = playerRegion, Nickname = nickname },
+			networkClient.Connect(new LoginRequest { Identifier = deviceId + localTestToken, Region = playerRegion, Nickname = nickname },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
 					playerId = response.PlayerId;
-					nickname = response.SavedNickname;
+					SaveNicknameLocally(response.SavedNickname);
 					onSuccess?.Invoke(response.IsAuthenticated);
 				},
 				(failure) =>

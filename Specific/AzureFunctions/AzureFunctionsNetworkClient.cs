@@ -33,7 +33,7 @@ namespace Kalkatos.Network.Specific
 		{
 			Initialize();
 			NetworkError error = new NetworkError();
-			if (!CheckParameter(parameter, Type.GetTypeCode(typeof(PlayerConnectInfo)), ref error))
+			if (!CheckParameter(parameter, Type.GetTypeCode(typeof(LoginRequest)), ref error))
 			{
 				onFailure?.Invoke(error);
 				return;
@@ -50,15 +50,15 @@ namespace Kalkatos.Network.Specific
 			}
 			Initialize();
 
-			PlayerConnectInfo newInfo = new PlayerConnectInfo
+			SetNicknameRequest request = new SetNicknameRequest
 			{
-				Identifier = MyId,
+				PlayerId = MyId,
 				Nickname = nickname
 			};
 			_ = httpClient.PostAsync(
 					//"https://kalkatos-games.azurewebsites.net/api/SetNickname",
 					"http://localhost:7089/api/SetNickname",
-					new StringContent(JsonConvert.SerializeObject(newInfo)));
+					new StringContent(JsonConvert.SerializeObject(request)));
 		}
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
