@@ -1,6 +1,3 @@
 [submodule "Model"]
 	path = Model
 	url = https://github.com/kalkatos/network-model.git
-[submodule "Specific/AzureFunctions/FunctionsModel"]
-	path = Specific/AzureFunctions/FunctionsModel
-	url = https://github.com/kalkatos/functions-game-models.git
