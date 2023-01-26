@@ -11,7 +11,7 @@ namespace Kalkatos.Network
 		bool IsInRoom { get; }
 		PlayerInfo[] Players { get; }
 		PlayerInfo MyInfo { get; }
-		RoomInfo RoomInfo { get; }
+		MatchInfo MatchInfo { get; }
 
 		void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);

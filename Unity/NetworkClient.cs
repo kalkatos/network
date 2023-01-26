@@ -3,7 +3,6 @@ using System.Collections;
 using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
-using Kalkatos.FunctionsGame.Models;
 using Random = UnityEngine.Random;
 
 namespace Kalkatos.Network.Unity
@@ -40,19 +39,19 @@ namespace Kalkatos.Network.Unity
 			Storage.Save("LocalTester" + localTestToken, 0);
 		}
 
-		private static IEnumerator FetchRoomCoroutine (Action<RoomInfo> onSuccess, Action<NetworkError> onFailure, float timeout)
+		private static IEnumerator FetchRoomCoroutine (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure, float timeout)
 		{
 			float startTime = Time.time;
 			bool isTimedOut = false;
-			bool isValidRoom = !string.IsNullOrEmpty(networkClient.RoomInfo.RoomId);
+			bool isValidRoom = !string.IsNullOrEmpty(networkClient.MatchInfo.MatchId);
 			while (!isValidRoom && !isTimedOut)
 			{
-				isValidRoom = !string.IsNullOrEmpty(networkClient.RoomInfo.RoomId);
+				isValidRoom = !string.IsNullOrEmpty(networkClient.MatchInfo.MatchId);
 				isTimedOut = Time.time - startTime > timeout;
 				yield return null;
 			}
 			if (isValidRoom)
-				onSuccess?.Invoke(networkClient.RoomInfo);
+				onSuccess?.Invoke(networkClient.MatchInfo);
 			else
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "Couldn't find any room." });
 		}
@@ -165,7 +164,7 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void FetchRoomInfo (Action<RoomInfo> onSuccess, Action<NetworkError> onFailure, float timeout = 10.0f)
+		public static void FetchRoomInfo (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure, float timeout = 10.0f)
 		{
 			if (string.IsNullOrEmpty(playerId))
 			{
@@ -173,11 +172,11 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
-			RoomInfo roomInfo = networkClient.RoomInfo;
-			if (string.IsNullOrEmpty(roomInfo.RoomId))
+			MatchInfo matchInfo = networkClient.MatchInfo;
+			if (string.IsNullOrEmpty(matchInfo.MatchId))
 				instance.StartCoroutine(FetchRoomCoroutine(onSuccess, onFailure, timeout));
 			else
-				onSuccess?.Invoke(roomInfo);
+				onSuccess?.Invoke(matchInfo);
 		}
 	}
 }

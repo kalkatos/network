@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Kalkatos.FunctionsGame.Models;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
 
@@ -11,33 +10,38 @@ namespace Kalkatos.Network.Specific
 	{
 		public event Action<byte, object> OnEventReceived;
 
-		private bool isInitialized = false;
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
-		private int delayBetweenChecks = 5;
+		private int delayForFirstCheck = 12;
+		private int delayBetweenChecks = 3;
 
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
 		public bool IsInRoom { get; private set; }
 		public PlayerInfo[] Players { get; private set; }
 		public PlayerInfo MyInfo { get; private set; }
-		public RoomInfo RoomInfo { get; private set; }
+		public MatchInfo MatchInfo { get; private set; }
 
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param screenName="parameter">A string with a device identifier.</param>
-		/// <param screenName="onSuccess">A <typeparamref screenName="LoginResponse"/> with info on the connection.</param>
+		/// <param screenName="parameter">A <typeparamref screenName="LoginRequest"/></param>
+		/// <param screenName="onSuccess">A <typeparamref screenName="LoginResponse"/> with matchResponse on the connection.</param>
 		/// <param screenName="onFailure">A <typeparamref screenName="NetworkError"/> with the reason it did not connect.</param>
 		public void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			Initialize();
-			NetworkError error = new NetworkError();
-			if (!CheckParameter(parameter, Type.GetTypeCode(typeof(LoginRequest)), ref error))
+			if (parameter == null)
 			{
-				onFailure?.Invoke(error);
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null, it must be an identifier string to connect." });
 				return;
 			}
+
+			if (!(parameter is LoginRequest))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
+				return;
+			}
+
 			_ = ConnectAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
 		}
 
@@ -48,8 +52,7 @@ namespace Kalkatos.Network.Specific
 				Logger.LogError("Not connected.");
 				return;
 			}
-			Initialize();
-
+			
 			SetNicknameRequest request = new SetNicknameRequest
 			{
 				PlayerId = MyId,
@@ -78,37 +81,12 @@ namespace Kalkatos.Network.Specific
 
 		public void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			Initialize();
+			
 		}
 
 		public void Post (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			Initialize();
-		}
-
-		private void Initialize ()
-		{
-			if (isInitialized)
-				return;
-			isInitialized = true;
-			httpClient.Timeout = TimeSpan.FromSeconds(5);
-		}
-
-		private bool CheckParameter (object parameter, TypeCode type, ref NetworkError networkError)
-		{
-			if (parameter == null)
-			{
-				networkError = new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null, it must be an identifier string to connect." };
-				return false;
-			}
-
-			if (Type.GetTypeCode(parameter.GetType()) != type)
-			{
-				networkError = new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." };
-				return false;
-			}
-
-			return true;
+			
 		}
 
 		private async Task ConnectAsync (string connectInfoSerialized, Action<object> onSuccess, Action<object> onFailure)
@@ -171,7 +149,7 @@ namespace Kalkatos.Network.Specific
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 
-			await Task.Delay(delayBetweenChecks * 1000);
+			await Task.Delay(delayForFirstCheck * 1000);
 			_ = GetMatchAsync(null, null);
 		}
 
@@ -189,18 +167,21 @@ namespace Kalkatos.Network.Specific
 				var response = await httpClient.PostAsync(
 				//"https://kalkatos-games.azurewebsites.net/api/GetMatch",
 				"http://localhost:7089/api/GetMatch",
-				new StringContent(MyId));
+				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
 				string result = await response.Content.ReadAsStringAsync();
-				if (!string.IsNullOrEmpty(result))
+				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
+				if (matchResponse.IsError)
 				{
-					RoomInfo? info = JsonConvert.DeserializeObject<RoomInfo?>(result);
-					if (info.HasValue)
-						RoomInfo = info.Value;
+					Logger.Log($"Couldn't get match. Error = {matchResponse.ErrorMessage}");
+					MatchInfo = null;
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = matchResponse.ErrorMessage }); 
 				}
-				if (string.IsNullOrEmpty(RoomInfo.RoomId))
-					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "No match found for this client." });
 				else
-					onSuccess?.Invoke(RoomInfo);
+				{
+					Logger.Log($"Got match = {matchResponse.MatchId}");
+					MatchInfo = new MatchInfo { MatchId = matchResponse.MatchId, Players = matchResponse.Players };
+					onSuccess?.Invoke(MatchInfo); 
+				}
 			}
 			catch (Exception e)
 			{
