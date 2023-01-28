@@ -39,52 +39,7 @@ namespace Kalkatos.Network.Unity
 			Storage.Save("LocalTester" + localTestToken, 0);
 		}
 
-		private static IEnumerator FetchRoomCoroutine (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure, float timeout)
-		{
-			float startTime = Time.time;
-			bool isTimedOut = false;
-			bool isValidRoom = !string.IsNullOrEmpty(networkClient.MatchInfo.MatchId);
-			while (!isValidRoom && !isTimedOut)
-			{
-				isValidRoom = !string.IsNullOrEmpty(networkClient.MatchInfo.MatchId);
-				isTimedOut = Time.time - startTime > timeout;
-				yield return null;
-			}
-			if (isValidRoom)
-				onSuccess?.Invoke(networkClient.MatchInfo);
-			else
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "Couldn't find any room." });
-		}
-
-		private static string RandomName (int length)
-		{
-			string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
-			string consonantsLower = "bcdfghjklmnpqrstvwxz";
-			string vowels = "aeiouy";
-			string result = "";
-			for (int i = 0; i < length; i++)
-			{
-				if (i == 0)
-					result += consonantsUpper[Random.Range(0, consonantsUpper.Length)];
-				else if (i % 2 == 0)
-					result += consonantsLower[Random.Range(0, consonantsLower.Length)];
-				else
-					result += vowels[Random.Range(0, vowels.Length)];
-			}
-			return result;
-		}
-
-		private static void SaveNicknameLocally (string nick)
-		{
-			nickname = nick;
-			Storage.Save("Nickname", nick);
-		}
-
-		private static void SendNicknameToServer (string nick)
-		{
-			if (IsConnected)
-				networkClient.SetNickname(nick);
-		}
+		// =========================================================  P U B L I C ==============================================================
 
 		public static void SetNickname (string nick)
 		{
@@ -164,7 +119,7 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void FetchRoomInfo (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure, float timeout = 10.0f)
+		public static void GetMatch (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (string.IsNullOrEmpty(playerId))
 			{
@@ -173,10 +128,61 @@ namespace Kalkatos.Network.Unity
 			}
 
 			MatchInfo matchInfo = networkClient.MatchInfo;
-			if (string.IsNullOrEmpty(matchInfo.MatchId))
-				instance.StartCoroutine(FetchRoomCoroutine(onSuccess, onFailure, timeout));
+			if (matchInfo == null || string.IsNullOrEmpty(matchInfo.MatchId))
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Match is not available yet." });
 			else
 				onSuccess?.Invoke(matchInfo);
 		}
+
+		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
+			networkClient.LeaveMatch(null,
+				(success) =>
+				{
+					onSuccess?.Invoke("Success Leaving Match");
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
+		
+		// =========================================================  P R I V A T E ==============================================================
+
+		private static string RandomName (int length)
+		{
+			string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
+			string consonantsLower = "bcdfghjklmnpqrstvwxz";
+			string vowels = "aeiouy";
+			string result = "";
+			for (int i = 0; i < length; i++)
+			{
+				if (i == 0)
+					result += consonantsUpper[Random.Range(0, consonantsUpper.Length)];
+				else if (i % 2 == 0)
+					result += consonantsLower[Random.Range(0, consonantsLower.Length)];
+				else
+					result += vowels[Random.Range(0, vowels.Length)];
+			}
+			return result;
+		}
+
+		private static void SaveNicknameLocally (string nick)
+		{
+			nickname = nick;
+			Storage.Save("Nickname", nick);
+		}
+
+		private static void SendNicknameToServer (string nick)
+		{
+			if (IsConnected)
+				networkClient.SetNickname(nick);
+		}
+
 	}
 }

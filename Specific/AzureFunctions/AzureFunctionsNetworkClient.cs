@@ -12,7 +12,7 @@ namespace Kalkatos.Network.Specific
 
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
-		private int delayForFirstCheck = 12;
+		private int delayForFirstCheck = 8;
 		private int delayBetweenChecks = 3;
 
 		public string MyId { get; private set; }
@@ -71,7 +71,7 @@ namespace Kalkatos.Network.Specific
 
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-
+			_ = LeaveMatchAsync(onSuccess, onFailure);
 		}
 
 		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -125,6 +125,7 @@ namespace Kalkatos.Network.Specific
 
 		private async Task FindMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
+			Logger.Log("Trying to find a match.");
 			try
 			{
 				var response = await httpClient.PostAsync(
@@ -172,13 +173,13 @@ namespace Kalkatos.Network.Specific
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse.IsError)
 				{
-					Logger.Log($"Couldn't get match. Error = {matchResponse.ErrorMessage}");
+					Logger.Log($"Couldn't get match. Error = {matchResponse.Message}");
 					MatchInfo = null;
-					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = matchResponse.ErrorMessage }); 
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = matchResponse.Message }); 
 				}
 				else
 				{
-					Logger.Log($"Got match = {matchResponse.MatchId}");
+					Logger.Log($"Got match = {JsonConvert.SerializeObject(matchResponse)}");
 					MatchInfo = new MatchInfo { MatchId = matchResponse.MatchId, Players = matchResponse.Players };
 					onSuccess?.Invoke(MatchInfo); 
 				}
@@ -187,6 +188,36 @@ namespace Kalkatos.Network.Specific
 			{
 				Logger.LogError(e.ToString());
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match." });
+			}
+		}
+
+		private async Task LeaveMatchAsync (Action<object> onSuccess, Action<object> onFailure)
+		{
+			MatchInfo = null;
+			try
+			{
+				var response = await httpClient.PostAsync(
+				//"https://kalkatos-games.azurewebsites.net/api/LeaveMatch",
+				"http://localhost:7089/api/LeaveMatch",
+				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
+				string result = await response.Content.ReadAsStringAsync();
+				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
+				if (matchResponse.IsError)
+				{
+					Logger.Log($"Error trying to leave match = {matchResponse.Message}");
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = matchResponse.Message });
+				}
+				else
+				{
+					string matchId = matchResponse.MatchId != null ? matchResponse.MatchId : "<unidentified>";
+					Logger.Log($"Left match {matchId}, Message = {matchResponse.Message}");
+					onSuccess?.Invoke(null);
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.LogError(e.ToString());
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = $"Exception trying to leave match = {e.Message}" });
 			}
 		}
 
