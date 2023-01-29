@@ -16,6 +16,10 @@ namespace Kalkatos.Network.Unity
 		private static string nickname;
 		private static string localTestToken;
 
+		private const string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
+		private const string consonantsLower = "bcdfghjklmnpqrstvwxz";
+		private const string vowels = "aeiouy";
+
 		public static bool IsConnected => networkClient.IsConnected;
 
 		private void Awake ()
@@ -151,14 +155,11 @@ namespace Kalkatos.Network.Unity
 					onFailure?.Invoke((NetworkError)failure);
 				});
 		}
-		
+
 		// =========================================================  P R I V A T E ==============================================================
 
 		private static string RandomName (int length)
 		{
-			string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
-			string consonantsLower = "bcdfghjklmnpqrstvwxz";
-			string vowels = "aeiouy";
 			string result = "";
 			for (int i = 0; i < length; i++)
 			{
