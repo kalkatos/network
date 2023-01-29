@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
@@ -52,15 +53,31 @@ namespace Kalkatos.Network.Specific
 				Logger.LogError("Not connected.");
 				return;
 			}
-			
-			SetNicknameRequest request = new SetNicknameRequest
+			SetPlayerData(new Dictionary<string, string> { { "Nickname", nickname } }, null, null);
+		}
+
+		public void SetPlayerData (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		{
+			if (!IsConnected)
+			{
+				Logger.LogError("Not connected.");
+				return;
+			}
+
+			if (!(parameter is Dictionary<string, string>))
+			{
+				Logger.LogError("Wrong parameter. Must be a Dictionary<string, string>.");
+				return;
+			}
+
+			SetPlayerDataRequest request = new SetPlayerDataRequest
 			{
 				PlayerId = MyId,
-				Nickname = nickname
+				Data = (Dictionary<string, string>)parameter
 			};
 			_ = httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/SetNickname",
-					"http://localhost:7089/api/SetNickname",
+					//"https://kalkatos-games.azurewebsites.net/api/SetPlayerData",
+					"http://localhost:7089/api/SetPlayerData",
 					new StringContent(JsonConvert.SerializeObject(request)));
 		}
 

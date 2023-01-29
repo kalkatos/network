@@ -18,6 +18,7 @@ namespace Kalkatos.Network
 		void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void SetNickname (string nickname);
+		void SetPlayerData (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void Post (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
 	}
