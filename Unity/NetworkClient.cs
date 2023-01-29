@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
@@ -38,11 +37,6 @@ namespace Kalkatos.Network.Unity
 				nickname = "Guest-" + RandomName(6);
 		}
 
-		private void OnDestroy ()
-		{
-			Storage.Save("LocalTester" + localTestToken, 0);
-		}
-
 		// =========================================================  P U B L I C ==============================================================
 
 		public static void SetNickname (string nick)
@@ -67,22 +61,9 @@ namespace Kalkatos.Network.Unity
 			nickname = Storage.Load("Nickname", "Guest-" + RandomName(6));
 
 			// Local test token
-			localTestToken = "";
-			if (Storage.Load("LocalTester", 0) > 0)
-			{
-				for (int i = 1; i < 10; i++)
-				{
-					if (Storage.Load("LocalTester" + i, 0) == 0)
-					{
-						Storage.Save("LocalTester" + i, 1);
-						if (i > 0)
-							localTestToken = i.ToString();
-						break;
-					}
-				}
-			}
-			else
-				Storage.Save("LocalTester", 1);
+			localTestToken = Storage.Load("LocalTestToken", "");
+
+			Logger.Log("Connecting with identifier " + deviceId + localTestToken);
 
 			// Invoke network
 			networkClient.Connect(new LoginRequest { Identifier = deviceId + localTestToken, Region = playerRegion, Nickname = nickname },
