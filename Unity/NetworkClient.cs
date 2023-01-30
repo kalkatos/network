@@ -20,6 +20,7 @@ namespace Kalkatos.Network.Unity
 		private const string vowels = "aeiouy";
 
 		public static bool IsConnected => networkClient.IsConnected;
+		public static PlayerInfo MyInfo => networkClient.MyInfo;
 
 		private void Awake ()
 		{
