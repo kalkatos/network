@@ -21,6 +21,7 @@ namespace Kalkatos.Network.Unity
 
 		public static bool IsConnected => networkClient.IsConnected;
 		public static PlayerInfo MyInfo => networkClient.MyInfo;
+		public static MatchInfo MatchInfo => networkClient.MatchInfo;
 
 		private void Awake ()
 		{
