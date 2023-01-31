@@ -13,6 +13,27 @@ namespace Kalkatos.Network.Unity
 		public UnityEvent<string> OnOpponentNicknameReceived;
 		public UnityEvent<int> OnPlayerAvatarChanged;
 		public UnityEvent<int> OnOpponentAvatarReceived;
+		public UnityEvent<bool> IsInMatch;
+
+		public void UpdateMatchStatus ()
+		{
+			if (!NetworkClient.IsConnected)
+			{
+				IsInMatch?.Invoke(false);
+				return;
+			}
+			if (NetworkClient.MatchInfo == null)
+			{
+				IsInMatch?.Invoke(false);
+				return; 
+			}
+			if (string.IsNullOrEmpty(NetworkClient.MatchInfo.MatchId))
+			{
+				IsInMatch?.Invoke(false);
+				return; 
+			}
+			IsInMatch?.Invoke(true);
+		}
 
 		public void UpdatePlayerData ()
 		{

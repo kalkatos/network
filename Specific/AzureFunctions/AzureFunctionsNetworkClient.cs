@@ -13,6 +13,7 @@ namespace Kalkatos.Network.Specific
 
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
+		private bool hasAlreadyLeftMatch;
 		private int delayForFirstCheck = 8;
 		private int delayBetweenChecks = 3;
 
@@ -125,6 +126,7 @@ namespace Kalkatos.Network.Specific
 						Alias = loginResponse.PlayerAlias,
 						Nickname = loginResponse.SavedNickname,
 					};
+					await GetMatchAsync(null, null);
 					onSuccess?.Invoke(loginResponse);
 				}
 				else
@@ -143,6 +145,7 @@ namespace Kalkatos.Network.Specific
 		private async Task FindMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
 			Logger.Log("Trying to find a match.");
+			
 			try
 			{
 				var response = await httpClient.PostAsync(
@@ -167,14 +170,17 @@ namespace Kalkatos.Network.Specific
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 
+			hasAlreadyLeftMatch = false;
 			await Task.Delay(delayForFirstCheck * 1000);
-			_ = GetMatchAsync(null, null);
+			if (hasAlreadyLeftMatch)
+				hasAlreadyLeftMatch = false;
+			else
+				_ = GetMatchAsync(null, null);
 		}
 
 		private async Task GetMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
 			// Wait if the last GetMatch were made not long ago
-			// TODO Wait full time only if it's the first get after FindMatch, otherwise, wait just 1 or 2 seconds
 			double timeSinceLastCheckMatch = (DateTime.UtcNow - lastCheckMatchTime).TotalSeconds;
 			if (timeSinceLastCheckMatch < delayBetweenChecks)
 				await Task.Delay((int)(delayBetweenChecks - timeSinceLastCheckMatch) * 1000);
@@ -228,7 +234,8 @@ namespace Kalkatos.Network.Specific
 				{
 					string matchId = matchResponse.MatchId != null ? matchResponse.MatchId : "<unidentified>";
 					Logger.Log($"Left match {matchId}, Message = {matchResponse.Message}");
-					onSuccess?.Invoke(null);
+					hasAlreadyLeftMatch = true;
+					onSuccess?.Invoke(matchResponse);
 				}
 			}
 			catch (Exception e)

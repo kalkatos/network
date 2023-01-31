@@ -3,6 +3,9 @@ using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using System.Runtime.CompilerServices;
+using Kalkatos.UnityGame;
+using System.Collections;
 
 namespace Kalkatos.Network.Unity
 {
@@ -14,6 +17,7 @@ namespace Kalkatos.Network.Unity
 		private static string playerRegion;
 		private static string nickname;
 		private static string localTestToken;
+		private static bool canLeaveMatch = true;
 
 		private const string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
 		private const string consonantsLower = "bcdfghjklmnpqrstvwxz";
@@ -119,6 +123,7 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Match is not available yet." });
 			else
 				onSuccess?.Invoke(matchInfo);
+			canLeaveMatch = true;
 		}
 
 		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
@@ -131,7 +136,14 @@ namespace Kalkatos.Network.Unity
 			networkClient.LeaveMatch(null,
 				(success) =>
 				{
-					onSuccess?.Invoke("Success Leaving Match");
+					MatchResponse response = success as MatchResponse;
+					if (response.MatchId != null)
+					{
+						canLeaveMatch = false;
+						instance.StartCoroutine(WaitUntilMatchGotToLeave(() => onSuccess?.Invoke("Success Leaving Match")));
+					}
+					else
+						onSuccess?.Invoke("Success Leaving Match");
 				},
 				(failure) =>
 				{
@@ -168,5 +180,12 @@ namespace Kalkatos.Network.Unity
 				networkClient.SetNickname(nick);
 		}
 
+		private static IEnumerator WaitUntilMatchGotToLeave (Action callback)
+		{
+			Logger.Log($"[{nameof(NetworkClient)}] LeaveMatch: Waiting GetMatch to be called at least once before being able to leave match.");
+			while (!canLeaveMatch)
+				yield return null;
+			callback?.Invoke();
+		}
 	}
 }
