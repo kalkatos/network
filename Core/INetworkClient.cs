@@ -5,8 +5,6 @@ namespace Kalkatos.Network
 {
 	public interface INetworkClient
 	{
-		event Action<byte, object> OnEventReceived;
-
 		bool IsConnected { get; }
 		bool IsInRoom { get; }
 		PlayerInfo[] Players { get; }

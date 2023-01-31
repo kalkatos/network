@@ -1,13 +1,11 @@
 using Kalkatos.Network.Model;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Kalkatos.Network.Unity
 {
-	[CreateAssetMenu(fileName = "NetworkInfoDispatcher", menuName = "Network/Info Dispatcher")]
-	public class NetworkInfoDispatcher : ScriptableObject
+	[CreateAssetMenu(fileName = "NetworkInfoSO", menuName = "Network/Network Info")]
+	public class NetworkInfoSO : ScriptableObject
 	{
 		public UnityEvent<string> OnPlayerNicknameChanged;
 		public UnityEvent<string> OnOpponentNicknameReceived;

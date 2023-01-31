@@ -3,8 +3,8 @@ using UnityEngine.Events;
 
 namespace Kalkatos.Network.Unity
 {
-	[CreateAssetMenu(fileName = "NetworkEventDispatcher", menuName = "Network/Event Dispatcher")]
-	public class NetworkEventDispatcher : ScriptableObject
+	[CreateAssetMenu(fileName = "NetworkClientSO", menuName = "Network/Network Client")]
+	public class NetworkClientSO : ScriptableObject
 	{
 		public UnityEvent OnConnectSuccess;
 		public UnityEvent OnConnectFailure;

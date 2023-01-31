@@ -1,16 +1,20 @@
 ﻿using System;
-using Kalkatos.Network.Specific;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using System.Runtime.CompilerServices;
-using Kalkatos.UnityGame;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Kalkatos.Network.Unity
 {
 	public class NetworkClient : MonoBehaviour
 	{
+		public static event Action OnConnected;
+		public static event Action OnFindMatch;
+		public static event Action<MatchInfo> OnGetMatch;
+		public static event Action<MatchResponse> OnLeaveMatch;
+		public static event Action<Dictionary<string, string>> OnSetPlayerData;
+
 		private static NetworkClient instance;
 		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
 		private static string playerId;
@@ -51,6 +55,11 @@ namespace Kalkatos.Network.Unity
 			SendNicknameToServer(nick);
 		}
 
+		public static void SetPlayerData (Dictionary<string, string> data)
+		{
+			networkClient.SetPlayerData(data, null, null);
+		}
+
 		/// <summary>
 		/// Invokes the connect method on the Network interface.
 		/// </summary>
@@ -79,6 +88,7 @@ namespace Kalkatos.Network.Unity
 					playerId = response.PlayerId;
 					SaveNicknameLocally(response.SavedNickname);
 					onSuccess?.Invoke(response.IsAuthenticated);
+					OnConnected?.Invoke();
 				},
 				(failure) =>
 				{
@@ -103,6 +113,7 @@ namespace Kalkatos.Network.Unity
 				(success) =>
 				{
 					onSuccess?.Invoke("Success");
+					OnFindMatch?.Invoke();
 				},
 				(failure) =>
 				{
@@ -122,7 +133,10 @@ namespace Kalkatos.Network.Unity
 			if (matchInfo == null || string.IsNullOrEmpty(matchInfo.MatchId))
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Match is not available yet." });
 			else
+			{
 				onSuccess?.Invoke(matchInfo);
+				OnGetMatch?.Invoke(matchInfo);
+			}
 			canLeaveMatch = true;
 		}
 
@@ -143,7 +157,10 @@ namespace Kalkatos.Network.Unity
 						instance.StartCoroutine(WaitUntilMatchGotToLeave(() => onSuccess?.Invoke("Success Leaving Match")));
 					}
 					else
+					{
 						onSuccess?.Invoke("Success Leaving Match");
+						OnLeaveMatch?.Invoke(response);
+					}
 				},
 				(failure) =>
 				{

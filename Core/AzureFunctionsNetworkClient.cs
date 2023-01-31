@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
 
-namespace Kalkatos.Network.Specific
+namespace Kalkatos.Network
 {
-	public class AzureFunctionsNetworkClient : INetworkClient
+
+	public class AzureFunctionsNetworkClient : NetworkEventDispatcher, INetworkClient
 	{
 		public event Action<byte, object> OnEventReceived;
 
@@ -71,15 +72,17 @@ namespace Kalkatos.Network.Specific
 				return;
 			}
 
+			var changedData = (Dictionary<string, string>)parameter;
 			SetPlayerDataRequest request = new SetPlayerDataRequest
 			{
 				PlayerId = MyId,
-				Data = (Dictionary<string, string>)parameter
+				Data = changedData
 			};
 			_ = httpClient.PostAsync(
 					//"https://kalkatos-games.azurewebsites.net/api/SetPlayerData",
 					"http://localhost:7089/api/SetPlayerData",
 					new StringContent(JsonConvert.SerializeObject(request)));
+			FireEvent((byte)NetworkEventKey.SetPlayerData, changedData);
 		}
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -128,6 +131,7 @@ namespace Kalkatos.Network.Specific
 					};
 					await GetMatchAsync(null, null);
 					onSuccess?.Invoke(loginResponse);
+					FireEvent((byte)NetworkEventKey.Connect, loginResponse);
 				}
 				else
 				{
@@ -157,6 +161,7 @@ namespace Kalkatos.Network.Specific
 				{
 					onSuccess?.Invoke(null);
 					lastCheckMatchTime = DateTime.UtcNow;
+					FireEvent((byte)NetworkEventKey.FindMatch, null);
 				}
 				else
 				{
@@ -204,7 +209,8 @@ namespace Kalkatos.Network.Specific
 				{
 					Logger.Log($"Got match = {JsonConvert.SerializeObject(matchResponse)}");
 					MatchInfo = new MatchInfo { MatchId = matchResponse.MatchId, Players = matchResponse.Players };
-					onSuccess?.Invoke(MatchInfo); 
+					onSuccess?.Invoke(MatchInfo);
+					FireEvent((byte)NetworkEventKey.GetMatch, MatchInfo);
 				}
 			}
 			catch (Exception e)
@@ -236,6 +242,7 @@ namespace Kalkatos.Network.Specific
 					Logger.Log($"Left match {matchId}, Message = {matchResponse.Message}");
 					hasAlreadyLeftMatch = true;
 					onSuccess?.Invoke(matchResponse);
+					FireEvent((byte)NetworkEventKey.LeaveMatch, matchResponse);
 				}
 			}
 			catch (Exception e)
