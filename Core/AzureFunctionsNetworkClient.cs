@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
+using Sirenix.Utilities;
 
 namespace Kalkatos.Network
 {
@@ -16,7 +18,8 @@ namespace Kalkatos.Network
 		private DateTime lastCheckMatchTime;
 		private bool hasAlreadyLeftMatch;
 		private int delayForFirstCheck = 8;
-		private int delayBetweenChecks = 3;
+		private int delayBetweenChecks = 2;
+		private List<StateInfo> stateHistory = new List<StateInfo>();
 
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
@@ -24,6 +27,7 @@ namespace Kalkatos.Network
 		public PlayerInfo[] Players { get; private set; }
 		public PlayerInfo MyInfo { get; private set; }
 		public MatchInfo MatchInfo { get; private set; }
+		public StateInfo StateInfo { get; private set; }
 
 		/// <summary>
 		/// 
@@ -90,14 +94,60 @@ namespace Kalkatos.Network
 			_ = FindMatchAsync(onSuccess, onFailure);
 		}
 
+		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		{
+			_ = GetMatchAsync(onSuccess, onFailure);
+		}
+
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
 			_ = LeaveMatchAsync(onSuccess, onFailure);
 		}
 
-		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		public void SendAction (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			_ = GetMatchAsync(onSuccess, onFailure);
+			if (parameter == null)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null, it must be an identifier string to connect." });
+				return;
+			}
+
+			if (!(parameter is ActionRequest))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
+				return;
+			}
+
+			ActionRequest request = (ActionRequest)parameter;
+			request.Parameter = JsonConvert.SerializeObject(request.Parameter);
+			_ = SendActionAsync(JsonConvert.SerializeObject(request), onSuccess, onFailure);
+		}
+
+		public void GetMatchState (object parameter, Action<object> onSuccess, Action<object> onFailure)
+		{
+			if (parameter == null)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null, it must be an identifier string to connect." });
+				return;
+			}
+
+			if (!(parameter is StateRequest))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
+				return;
+			}
+
+			if (StateInfo != null)
+			{
+				StateRequest request = (StateRequest)parameter;
+				if (request.LastIndex < StateInfo.Index)
+				{
+					StateInfo[] infoSequence = stateHistory.Where(state => state.Index > request.LastIndex && state.Index <= StateInfo.Index).ToArray();
+					onSuccess?.Invoke(infoSequence);
+					return;
+				}
+			}
+			_ = GetMatchStateAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
 		}
 
 		public void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -186,10 +236,7 @@ namespace Kalkatos.Network
 		private async Task GetMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
 			// Wait if the last GetMatch were made not long ago
-			double timeSinceLastCheckMatch = (DateTime.UtcNow - lastCheckMatchTime).TotalSeconds;
-			if (timeSinceLastCheckMatch < delayBetweenChecks)
-				await Task.Delay((int)(delayBetweenChecks - timeSinceLastCheckMatch) * 1000);
-			lastCheckMatchTime = DateTime.UtcNow;
+			await DelayBetweenMatchChecks();
 
 			try
 			{
@@ -252,6 +299,74 @@ namespace Kalkatos.Network
 			}
 		}
 
+		private async Task SendActionAsync (string actionRequestSerialized, Action<object> onSuccess, Action<object> onFailure)
+		{
+			try
+			{
+				var response = await httpClient.PostAsync(
+					//"https://kalkatos-games.azurewebsites.net/api/SendAction",
+					"http://localhost:7089/api/SendAction",
+					new StringContent(actionRequestSerialized));
+				string result = await response.Content.ReadAsStringAsync();
+				if (response.IsSuccessStatusCode)
+				{
+					ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
+					onSuccess?.Invoke(actionResponse);
+					FireEvent((byte)NetworkEventKey.SendAction, actionResponse);
+				}
+				else
+				{
+					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
+					onFailure?.Invoke(error);
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.LogError(e.ToString());
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error sending action." });
+			}
+		}
+
+		private async Task GetMatchStateAsync (string stateRequestSerialized, Action<object> onSuccess, Action<object> onFailure)
+		{
+			await DelayBetweenMatchChecks();
+
+			try
+			{
+				var response = await httpClient.PostAsync(
+					//"https://kalkatos-games.azurewebsites.net/api/GetMatchState",
+					"http://localhost:7089/api/GetMatchState",
+					new StringContent(stateRequestSerialized));
+				string result = await response.Content.ReadAsStringAsync();
+				if (response.IsSuccessStatusCode)
+				{
+					StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
+					onSuccess?.Invoke(stateResponse);
+					FireEvent((byte)NetworkEventKey.GetMatchState, stateResponse);
+					stateHistory = stateHistory.Union(stateResponse.StateInfos, new StateComparer()).ToList();
+					stateHistory.OrderBy(s => s.Index);
+				}
+				else
+				{
+					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
+					onFailure?.Invoke(error);
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.LogError(e.ToString());
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match state." });
+			}
+		}
+
+		private async Task DelayBetweenMatchChecks ()
+		{
+			double timeSinceLastCheckMatch = (DateTime.UtcNow - lastCheckMatchTime).TotalSeconds;
+			if (timeSinceLastCheckMatch < delayBetweenChecks)
+				await Task.Delay((int)(delayBetweenChecks - timeSinceLastCheckMatch) * 1000);
+			lastCheckMatchTime = DateTime.UtcNow;
+		}
+
 		public class FunctionInfo
 		{
 			public string FunctionName;
@@ -261,6 +376,26 @@ namespace Kalkatos.Network
 		public class Config
 		{
 			public FunctionInfo[] Functions;
+		}
+
+		public class StateComparer : IEqualityComparer<StateInfo>
+		{
+			public bool Equals (StateInfo a, StateInfo b)
+			{
+				if (a == null && b == null)
+					return true;
+				else if (a == null || b == null)
+					return false;
+				else if (a.Index == b.Index)
+					return true;
+				else
+					return false;
+			}
+
+			public int GetHashCode (StateInfo obj)
+			{
+				return obj.Index.GetHashCode();
+			}
 		}
 	}
 }

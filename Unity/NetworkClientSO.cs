@@ -14,6 +14,8 @@ namespace Kalkatos.Network.Unity
 		public UnityEvent OnGetMatchFailure;
 		public UnityEvent OnLeaveMatchSuccess;
 		public UnityEvent OnLeaveMatchFailure;
+		public UnityEvent OnSendActionSuccess;
+		public UnityEvent OnSendActionFailure;
 
 		public void SetNickname (string nick)
 		{
@@ -38,6 +40,13 @@ namespace Kalkatos.Network.Unity
 		public void LeaveMatch ()
 		{
 			NetworkClient.LeaveMatch((success) => OnLeaveMatchSuccess?.Invoke(), (failure) => OnLeaveMatchFailure?.Invoke());
+		}
+
+		public void 
+
+		public void SendSimpleAction (string action)
+		{
+			NetworkClient.SendAction(action, null, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());
 		}
 	}
 }

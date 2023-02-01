@@ -7,6 +7,7 @@
 		GetMatch = 203,
 		LeaveMatch = 204,
 		SetPlayerData = 205,
-
+		SendAction = 206,
+		GetMatchState = 207
 	}
 }

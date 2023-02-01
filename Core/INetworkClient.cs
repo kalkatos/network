@@ -10,6 +10,7 @@ namespace Kalkatos.Network
 		PlayerInfo[] Players { get; }
 		PlayerInfo MyInfo { get; }
 		MatchInfo MatchInfo { get; }
+		StateInfo StateInfo { get; }
 
 		void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
@@ -17,6 +18,8 @@ namespace Kalkatos.Network
 		void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void SetNickname (string nickname);
 		void SetPlayerData (object parameter, Action<object> onSuccess, Action<object> onFailure);
+		void SendAction (object parameter, Action<object> onSuccess, Action<object> onFailure);
+		void GetMatchState (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void Post (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
 	}

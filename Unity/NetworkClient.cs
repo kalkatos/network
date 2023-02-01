@@ -4,6 +4,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Rendering;
 
 namespace Kalkatos.Network.Unity
 {
@@ -30,6 +31,7 @@ namespace Kalkatos.Network.Unity
 		public static bool IsConnected => networkClient.IsConnected;
 		public static PlayerInfo MyInfo => networkClient.MyInfo;
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
+		public static StateInfo StateInfo => networkClient.StateInfo;
 
 		private void Awake ()
 		{
@@ -161,6 +163,46 @@ namespace Kalkatos.Network.Unity
 						onSuccess?.Invoke("Success Leaving Match");
 						OnLeaveMatch?.Invoke(response);
 					}
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
+
+		public static void SendAction (string action, object param, Action<ActionResponse> onSuccess, Action<NetworkError> onFailure) 
+		{
+			ActionRequest request = new ActionRequest
+			{
+				PlayerId = playerId,
+				MatchId = MatchInfo.MatchId,
+				ActionName = action,
+				Parameter = param
+			};
+			networkClient.SendAction(request,
+				(success) =>
+				{
+					onSuccess?.Invoke((ActionResponse)success);
+				}, 
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
+
+		public static void GetMatchState (Action<StateInfo[]> onSuccess, Action<NetworkError> onFailure)
+		{
+			int lastIndex = StateInfo?.Index ?? 0;
+			StateRequest request = new StateRequest
+			{
+				PlayerId = playerId,
+				MatchId = MatchInfo.MatchId,
+				LastIndex = lastIndex
+			};
+			networkClient.GetMatchState(request,
+				(success) =>
+				{
+					onSuccess?.Invoke(((StateResponse)success).StateInfos);
 				},
 				(failure) =>
 				{
