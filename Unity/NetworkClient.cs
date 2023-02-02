@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using System.Collections;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Kalkatos.Network.Unity
@@ -175,6 +175,7 @@ namespace Kalkatos.Network.Unity
 			ActionRequest request = new ActionRequest
 			{
 				PlayerId = playerId,
+				PlayerAlias = MyInfo.Alias,
 				MatchId = MatchInfo.MatchId,
 				ActionName = action,
 				SerializedParameter = JsonConvert.SerializeObject(param)

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Kalkatos.Network.Unity
@@ -16,6 +17,8 @@ namespace Kalkatos.Network.Unity
 		public UnityEvent OnLeaveMatchFailure;
 		public UnityEvent OnSendActionSuccess;
 		public UnityEvent OnSendActionFailure;
+		public UnityEvent OnGetMatchStateSuccess;
+		public UnityEvent OnGetMatchStateFailure;
 
 		public void SetNickname (string nick)
 		{
@@ -45,6 +48,11 @@ namespace Kalkatos.Network.Unity
 		public void SendSimpleAction (string action)
 		{
 			NetworkClient.SendAction(action, null, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());
+		}
+
+		public void GetMatchState ()
+		{
+			NetworkClient.GetMatchState((success) => OnGetMatchStateSuccess?.Invoke(), (failure) => OnGetMatchStateFailure?.Invoke());
 		}
 	}
 }

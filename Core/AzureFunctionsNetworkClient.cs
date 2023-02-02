@@ -5,8 +5,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
-using Sirenix.Utilities;
-using UnityEditor.PackageManager;
 
 namespace Kalkatos.Network
 {
@@ -145,6 +143,7 @@ namespace Kalkatos.Network
 				{
 					StateInfo[] infoSequence = stateHistory.Where(state => state.Index > request.LastIndex && state.Index <= StateInfo.Index).ToArray();
 					onSuccess?.Invoke(infoSequence);
+					StateInfo = infoSequence.Where(state => state.Index == infoSequence.Max(state2 => state2.Index)).First();
 					return;
 				}
 			}
@@ -174,7 +173,10 @@ namespace Kalkatos.Network
 				string result = await response.Content.ReadAsStringAsync();
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 				if (loginResponse.IsError)
+				{
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {loginResponse.Message}");
 					onFailure?.Invoke(new NetworkError { Message = loginResponse.Message });
+				}
 				else
 				{
 					IsConnected = true;
@@ -191,7 +193,7 @@ namespace Kalkatos.Network
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.ToString());
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 		}
@@ -209,7 +211,10 @@ namespace Kalkatos.Network
 				string result = await response.Content.ReadAsStringAsync();
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (findMatchResponse.IsError)
-					onFailure?.Invoke(new NetworkError { Message = findMatchResponse.Message });
+				{
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {findMatchResponse.Message}");
+					onFailure?.Invoke(new NetworkError { Message = findMatchResponse.Message }); 
+				}
 				else
 				{
 					onSuccess?.Invoke(null);
@@ -219,7 +224,7 @@ namespace Kalkatos.Network
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.ToString());
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 
@@ -246,7 +251,7 @@ namespace Kalkatos.Network
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse.IsError)
 				{
-					Logger.Log($"Couldn't get match. Error = {matchResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatch)}: {matchResponse.Message}");
 					MatchInfo = null;
 					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = matchResponse.Message }); 
 				}
@@ -260,7 +265,7 @@ namespace Kalkatos.Network
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.ToString());
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatch)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match." });
 			}
 		}
@@ -278,7 +283,7 @@ namespace Kalkatos.Network
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse.IsError)
 				{
-					Logger.Log($"Error trying to leave match = {matchResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {matchResponse.Message}");
 					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = matchResponse.Message });
 				}
 				else
@@ -292,7 +297,7 @@ namespace Kalkatos.Network
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.ToString());
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = $"Exception trying to leave match = {e.Message}" });
 			}
 		}
@@ -308,7 +313,10 @@ namespace Kalkatos.Network
 				string result = await response.Content.ReadAsStringAsync();
 				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
 				if (actionResponse.IsError)
-					onFailure?.Invoke(new NetworkError { Message = actionResponse.Message });
+				{
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SendAction)}: {actionResponse.Message}");
+					onFailure?.Invoke(new NetworkError { Message = actionResponse.Message }); 
+				}
 				else
 				{
 					onSuccess?.Invoke(actionResponse);
@@ -317,7 +325,7 @@ namespace Kalkatos.Network
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.ToString());
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SendAction)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error sending action." });
 			}
 		}
@@ -335,18 +343,22 @@ namespace Kalkatos.Network
 				string result = await response.Content.ReadAsStringAsync();
 				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
 				if (stateResponse.IsError)
-					onFailure?.Invoke(new NetworkError { Message = stateResponse.Message });
+				{
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {stateResponse.Message}");
+					onFailure?.Invoke(new NetworkError { Message = stateResponse.Message }); 
+				}
 				else
 				{
 					onSuccess?.Invoke(stateResponse);
 					FireEvent((byte)NetworkEventKey.GetMatchState, stateResponse);
 					stateHistory = stateHistory.Union(stateResponse.StateInfos, new StateComparer()).ToList();
 					stateHistory.OrderBy(s => s.Index);
+					StateInfo = stateHistory.Where(state => state.Index == stateHistory.Max(state2 => state2.Index)).First();
 				}
 			}
 			catch (Exception e)
 			{
-				Logger.LogError(e.ToString());
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match state." });
 			}
 		}
