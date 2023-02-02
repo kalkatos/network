@@ -42,8 +42,6 @@ namespace Kalkatos.Network.Unity
 			NetworkClient.LeaveMatch((success) => OnLeaveMatchSuccess?.Invoke(), (failure) => OnLeaveMatchFailure?.Invoke());
 		}
 
-		public void 
-
 		public void SendSimpleAction (string action)
 		{
 			NetworkClient.SendAction(action, null, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());

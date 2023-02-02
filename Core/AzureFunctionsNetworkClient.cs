@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
 using Sirenix.Utilities;
+using UnityEditor.PackageManager;
 
 namespace Kalkatos.Network
 {
@@ -28,6 +29,8 @@ namespace Kalkatos.Network
 		public PlayerInfo MyInfo { get; private set; }
 		public MatchInfo MatchInfo { get; private set; }
 		public StateInfo StateInfo { get; private set; }
+
+		// =========================================================  P U B L I C  ==============================================================
 
 		/// <summary>
 		/// 
@@ -160,6 +163,8 @@ namespace Kalkatos.Network
 			
 		}
 
+		// ========================================================  P R I V A T E ===============================================================
+
 		private async Task ConnectAsync (string connectInfoSerialized, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
@@ -169,9 +174,11 @@ namespace Kalkatos.Network
 					"http://localhost:7089/api/LogIn",
 					new StringContent(connectInfoSerialized));
 				string result = await response.Content.ReadAsStringAsync();
-				if (response.IsSuccessStatusCode)
+				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
+				if (loginResponse.IsError)
+					onFailure?.Invoke(new NetworkError { Message = loginResponse.Message });
+				else
 				{
-					LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 					IsConnected = true;
 					MyId = loginResponse.PlayerId;
 					MyInfo = new PlayerInfo
@@ -182,11 +189,6 @@ namespace Kalkatos.Network
 					await GetMatchAsync(null, null);
 					onSuccess?.Invoke(loginResponse);
 					FireEvent((byte)NetworkEventKey.Connect, loginResponse);
-				}
-				else
-				{
-					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
-					onFailure?.Invoke(error);
 				}
 			}
 			catch (Exception e)
@@ -207,16 +209,14 @@ namespace Kalkatos.Network
 					"http://localhost:7089/api/FindMatch",
 					new StringContent(MyId));
 				string result = await response.Content.ReadAsStringAsync();
-				if (response.IsSuccessStatusCode)
+				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
+				if (findMatchResponse.IsError)
+					onFailure?.Invoke(new NetworkError { Message = findMatchResponse.Message });
+				else
 				{
 					onSuccess?.Invoke(null);
 					lastCheckMatchTime = DateTime.UtcNow;
 					FireEvent((byte)NetworkEventKey.FindMatch, null);
-				}
-				else
-				{
-					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
-					onFailure?.Invoke(error);
 				}
 			}
 			catch (Exception e)
@@ -308,16 +308,13 @@ namespace Kalkatos.Network
 					"http://localhost:7089/api/SendAction",
 					new StringContent(actionRequestSerialized));
 				string result = await response.Content.ReadAsStringAsync();
-				if (response.IsSuccessStatusCode)
-				{
-					ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
-					onSuccess?.Invoke(actionResponse);
-					FireEvent((byte)NetworkEventKey.SendAction, actionResponse);
-				}
+				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
+				if (actionResponse.IsError)
+					onFailure?.Invoke(new NetworkError { Message = actionResponse.Message });
 				else
 				{
-					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
-					onFailure?.Invoke(error);
+					onSuccess?.Invoke(actionResponse);
+					FireEvent((byte)NetworkEventKey.SendAction, actionResponse);
 				}
 			}
 			catch (Exception e)
@@ -338,18 +335,15 @@ namespace Kalkatos.Network
 					"http://localhost:7089/api/GetMatchState",
 					new StringContent(stateRequestSerialized));
 				string result = await response.Content.ReadAsStringAsync();
-				if (response.IsSuccessStatusCode)
+				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
+				if (stateResponse.IsError)
+					onFailure?.Invoke(new NetworkError { Message = stateResponse.Message });
+				else
 				{
-					StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
 					onSuccess?.Invoke(stateResponse);
 					FireEvent((byte)NetworkEventKey.GetMatchState, stateResponse);
 					stateHistory = stateHistory.Union(stateResponse.StateInfos, new StateComparer()).ToList();
 					stateHistory.OrderBy(s => s.Index);
-				}
-				else
-				{
-					NetworkError? error = JsonConvert.DeserializeObject<NetworkError>(result);
-					onFailure?.Invoke(error);
 				}
 			}
 			catch (Exception e)
@@ -366,6 +360,8 @@ namespace Kalkatos.Network
 				await Task.Delay((int)(delayBetweenChecks - timeSinceLastCheckMatch) * 1000);
 			lastCheckMatchTime = DateTime.UtcNow;
 		}
+
+		// =======================================================  S U B C L A S S E S  ========================================================
 
 		public class FunctionInfo
 		{
