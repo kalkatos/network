@@ -4,7 +4,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Rendering;
+using Newtonsoft.Json;
 
 namespace Kalkatos.Network.Unity
 {
@@ -177,7 +177,7 @@ namespace Kalkatos.Network.Unity
 				PlayerId = playerId,
 				MatchId = MatchInfo.MatchId,
 				ActionName = action,
-				Parameter = param
+				SerializedParameter = JsonConvert.SerializeObject(param)
 			};
 			networkClient.SendAction(request,
 				(success) =>

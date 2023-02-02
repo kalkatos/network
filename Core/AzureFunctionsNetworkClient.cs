@@ -121,9 +121,7 @@ namespace Kalkatos.Network
 				return;
 			}
 
-			ActionRequest request = (ActionRequest)parameter;
-			request.Parameter = JsonConvert.SerializeObject(request.Parameter);
-			_ = SendActionAsync(JsonConvert.SerializeObject(request), onSuccess, onFailure);
+			_ = SendActionAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
 		}
 
 		public void GetMatchState (object parameter, Action<object> onSuccess, Action<object> onFailure)
