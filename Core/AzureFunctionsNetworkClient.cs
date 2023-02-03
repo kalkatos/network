@@ -354,6 +354,8 @@ namespace Kalkatos.Network
 					stateHistory = stateHistory.Union(stateResponse.StateInfos, new StateComparer()).ToList();
 					stateHistory.OrderBy(s => s.Index);
 					StateInfo = stateHistory.Where(state => state.Index == stateHistory.Max(state2 => state2.Index)).First();
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Got match state === {JsonConvert.SerializeObject(StateInfo)}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] State History === {JsonConvert.SerializeObject(stateHistory)}");
 				}
 			}
 			catch (Exception e)
