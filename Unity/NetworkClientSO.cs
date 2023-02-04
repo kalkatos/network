@@ -50,6 +50,11 @@ namespace Kalkatos.Network.Unity
 			NetworkClient.SendAction(action, null, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());
 		}
 
+		public void SendAction (ActionSO sender)
+		{
+			NetworkClient.SendAction(sender.ActionName, sender.Parameter, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());
+		}
+
 		public void GetMatchState ()
 		{
 			NetworkClient.GetMatchState((success) => OnGetMatchStateSuccess?.Invoke(), (failure) => OnGetMatchStateFailure?.Invoke());
