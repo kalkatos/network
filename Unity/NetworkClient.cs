@@ -14,6 +14,7 @@ namespace Kalkatos.Network.Unity
 		public static event Action OnFindMatch;
 		public static event Action<MatchInfo> OnGetMatch;
 		public static event Action<MatchResponse> OnLeaveMatch;
+		public static event Action<StateInfo> OnStateChanged;
 		public static event Action<Dictionary<string, string>> OnSetPlayerData;
 
 		private static NetworkClient instance;
@@ -170,20 +171,21 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void SendAction (string action, object param, Action<ActionResponse> onSuccess, Action<NetworkError> onFailure) 
+		public static void SendAction (StateInfo changedStateInfo, Action<StateInfo> onSuccess, Action<NetworkError> onFailure) 
 		{
 			ActionRequest request = new ActionRequest
 			{
 				PlayerId = playerId,
-				PlayerAlias = MyInfo.Alias,
 				MatchId = MatchInfo.MatchId,
-				ActionName = action,
-				SerializedParameter = JsonConvert.SerializeObject(param)
+				PublicChanges = changedStateInfo.PublicProperties,
+				PrivateChanges = changedStateInfo.PrivateProperties
 			};
 			networkClient.SendAction(request,
 				(success) =>
 				{
-					onSuccess?.Invoke((ActionResponse)success);
+					StateInfo state = (StateInfo)success;
+					onSuccess?.Invoke(state);
+					OnStateChanged?.Invoke(state);
 				}, 
 				(failure) =>
 				{
@@ -191,19 +193,21 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void GetMatchState (Action<StateInfo[]> onSuccess, Action<NetworkError> onFailure)
+		public static void GetMatchState (Action<StateInfo> onSuccess, Action<NetworkError> onFailure)
 		{
-			int lastIndex = StateInfo?.Index ?? 0;
+			int lastHash = StateInfo?.Hash ?? 0;
 			StateRequest request = new StateRequest
 			{
 				PlayerId = playerId,
 				MatchId = MatchInfo.MatchId,
-				LastIndex = lastIndex
+				LastHash = lastHash
 			};
 			networkClient.GetMatchState(request,
 				(success) =>
 				{
-					onSuccess?.Invoke(((StateResponse)success).StateInfos);
+					StateInfo state = (StateInfo)success;
+					onSuccess?.Invoke(state);
+					OnStateChanged?.Invoke(state);
 				},
 				(failure) =>
 				{

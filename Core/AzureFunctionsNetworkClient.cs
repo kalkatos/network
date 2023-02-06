@@ -18,7 +18,6 @@ namespace Kalkatos.Network
 		private bool hasAlreadyLeftMatch;
 		private int delayForFirstCheck = 8;
 		private int delayBetweenChecks = 2;
-		private List<StateInfo> stateHistory = new List<StateInfo>();
 
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
@@ -136,17 +135,6 @@ namespace Kalkatos.Network
 				return;
 			}
 
-			if (StateInfo != null)
-			{
-				StateRequest request = (StateRequest)parameter;
-				if (request.LastIndex < StateInfo.Index)
-				{
-					StateInfo[] infoSequence = stateHistory.Where(state => state.Index > request.LastIndex && state.Index <= StateInfo.Index).ToArray();
-					onSuccess?.Invoke(infoSequence);
-					StateInfo = infoSequence.Where(state => state.Index == infoSequence.Max(state2 => state2.Index)).First();
-					return;
-				}
-			}
 			_ = GetMatchStateAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
 		}
 
@@ -319,8 +307,9 @@ namespace Kalkatos.Network
 				}
 				else
 				{
-					onSuccess?.Invoke(actionResponse);
-					FireEvent((byte)NetworkEventKey.SendAction, actionResponse);
+					StateInfo = actionResponse.AlteredState;
+					onSuccess?.Invoke(StateInfo);
+					FireEvent((byte)NetworkEventKey.SendAction, StateInfo);
 				}
 			}
 			catch (Exception e)
@@ -349,13 +338,10 @@ namespace Kalkatos.Network
 				}
 				else
 				{
-					onSuccess?.Invoke(stateResponse);
-					FireEvent((byte)NetworkEventKey.GetMatchState, stateResponse);
-					stateHistory = stateHistory.Union(stateResponse.StateInfos, new StateComparer()).ToList();
-					stateHistory.OrderBy(s => s.Index);
-					StateInfo = stateHistory.Where(state => state.Index == stateHistory.Max(state2 => state2.Index)).First();
+					StateInfo = stateResponse.StateInfo;
+					onSuccess?.Invoke(StateInfo);
+					FireEvent((byte)NetworkEventKey.GetMatchState, StateInfo);
 					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Got match state === {JsonConvert.SerializeObject(StateInfo)}");
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] State History === {JsonConvert.SerializeObject(stateHistory)}");
 				}
 			}
 			catch (Exception e)
@@ -384,26 +370,6 @@ namespace Kalkatos.Network
 		public class Config
 		{
 			public FunctionInfo[] Functions;
-		}
-
-		public class StateComparer : IEqualityComparer<StateInfo>
-		{
-			public bool Equals (StateInfo a, StateInfo b)
-			{
-				if (a == null && b == null)
-					return true;
-				else if (a == null || b == null)
-					return false;
-				else if (a.Index == b.Index)
-					return true;
-				else
-					return false;
-			}
-
-			public int GetHashCode (StateInfo obj)
-			{
-				return obj.Index.GetHashCode();
-			}
 		}
 	}
 }

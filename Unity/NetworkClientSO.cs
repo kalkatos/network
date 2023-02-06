@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kalkatos.Network.Model;
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -7,6 +8,7 @@ namespace Kalkatos.Network.Unity
 	[CreateAssetMenu(fileName = "NetworkClientSO", menuName = "Network/Network Client")]
 	public class NetworkClientSO : ScriptableObject
 	{
+		public StateBuilder StateBuilder;
 		public UnityEvent OnConnectSuccess;
 		public UnityEvent OnConnectFailure;
 		public UnityEvent OnFindMatchSuccess;
@@ -45,19 +47,26 @@ namespace Kalkatos.Network.Unity
 			NetworkClient.LeaveMatch((success) => OnLeaveMatchSuccess?.Invoke(), (failure) => OnLeaveMatchFailure?.Invoke());
 		}
 
-		public void SendSimpleAction (string action)
+		public void SendAction ()
 		{
-			NetworkClient.SendAction(action, null, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());
-		}
-
-		public void SendAction (ActionSO sender)
-		{
-			NetworkClient.SendAction(sender.ActionName, sender.Parameter, (success) => OnSendActionSuccess?.Invoke(), (failure) => OnSendActionFailure?.Invoke());
+			NetworkClient.SendAction(StateBuilder.BuildChangedPieces(NetworkClient.StateInfo), 
+				(success) => 
+				{
+					OnSendActionSuccess?.Invoke();
+					StateBuilder.ReceiveState(success);
+				}, 
+				(failure) => OnSendActionFailure?.Invoke());
 		}
 
 		public void GetMatchState ()
 		{
-			NetworkClient.GetMatchState((success) => OnGetMatchStateSuccess?.Invoke(), (failure) => OnGetMatchStateFailure?.Invoke());
+			NetworkClient.GetMatchState(
+				(success) => 
+				{
+					OnGetMatchStateSuccess?.Invoke();
+					StateBuilder.ReceiveState(success);
+				}, 
+				(failure) => OnGetMatchStateFailure?.Invoke());
 		}
 	}
 }
