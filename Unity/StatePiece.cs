@@ -1,30 +1,47 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace Kalkatos.Network.Unity
 {
 	[CreateAssetMenu(fileName = "NewStatePiece", menuName = "Network/State Piece")]
 	public class StatePiece : ScriptableObject
 	{
-		[SerializeField, FormerlySerializedAs("Key")] private string key;
-		[SerializeField, FormerlySerializedAs("Value")] private string value;
-		[SerializeField, FormerlySerializedAs("OnKeySet")] private UnityEvent<string> onKeySet;
-		[SerializeField, FormerlySerializedAs("OnValueSet")] private UnityEvent<string> onValueSet;
+		[SerializeField] private string key;
+		[SerializeField] private string value;
+		[SerializeField] private UnityEvent<string> onKeySet;
+		[SerializeField] private UnityEvent<string> onValueSet;
+		public List<StateCheck> Checks;
 
 		public string Key => key;
 		public string Value => value;
 
-		public void SetKey (string name)
+		public void SetKey (string key)
 		{
-			key = name;
-			onKeySet?.Invoke(name);
+			this.key = key;
+			onKeySet?.Invoke(key);
 		}
 
-		public void SetValue (string param)
+		public void SetValue (string value)
 		{
-			value = param;
-			onValueSet?.Invoke(param);
+			this.value = value;
+			onValueSet?.Invoke(value);
+			foreach (var item in Checks)
+				item.Check(value);
+		}
+	}
+
+	[Serializable]
+	public class StateCheck
+	{
+		public string ExpectedValue;
+		public UnityEvent OnCheckValid;
+
+		public void Check (string value)
+		{
+			if (value == ExpectedValue)
+				OnCheckValid?.Invoke();
 		}
 	}
 }
