@@ -15,7 +15,6 @@ namespace Kalkatos.Network
 
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
-		private bool hasAlreadyLeftMatch;
 		private int delayForFirstCheck = 8;
 		private int delayBetweenChecks = 2;
 
@@ -174,7 +173,6 @@ namespace Kalkatos.Network
 						Alias = loginResponse.PlayerAlias,
 						Nickname = loginResponse.SavedNickname,
 					};
-					await GetMatchAsync(null, null);
 					onSuccess?.Invoke(loginResponse);
 					FireEvent((byte)NetworkEventKey.Connect, loginResponse);
 				}
@@ -188,8 +186,6 @@ namespace Kalkatos.Network
 
 		private async Task FindMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
-			Logger.Log("Trying to find a match.");
-			
 			try
 			{
 				var response = await httpClient.PostAsync(
@@ -215,13 +211,6 @@ namespace Kalkatos.Network
 				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
-
-			hasAlreadyLeftMatch = false;
-			await Task.Delay(delayForFirstCheck * 1000);
-			if (hasAlreadyLeftMatch)
-				hasAlreadyLeftMatch = false;
-			else
-				_ = GetMatchAsync(null, null);
 		}
 
 		private async Task GetMatchAsync (Action<object> onSuccess, Action<object> onFailure)
@@ -278,7 +267,6 @@ namespace Kalkatos.Network
 				{
 					string matchId = matchResponse.MatchId != null ? matchResponse.MatchId : "<unidentified>";
 					Logger.Log($"Left match {matchId}, Message = {matchResponse.Message}");
-					hasAlreadyLeftMatch = true;
 					onSuccess?.Invoke(matchResponse);
 					FireEvent((byte)NetworkEventKey.LeaveMatch, matchResponse);
 				}

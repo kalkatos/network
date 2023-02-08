@@ -5,6 +5,7 @@ using Kalkatos.Network.Model;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Newtonsoft.Json;
+using UnityEditor.PackageManager.Requests;
 
 namespace Kalkatos.Network.Unity
 {
@@ -132,14 +133,31 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
-			MatchInfo matchInfo = networkClient.MatchInfo;
-			if (matchInfo == null || string.IsNullOrEmpty(matchInfo.MatchId))
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Match is not available yet." });
-			else
+			MatchRequest request = new MatchRequest
 			{
-				onSuccess?.Invoke(matchInfo);
-				OnGetMatch?.Invoke(matchInfo);
-			}
+				PlayerId = playerId,
+				MatchId = networkClient.MatchInfo?.MatchId,
+			};
+			networkClient.GetMatch(request,
+				(success) =>
+				{
+					MatchInfo matchInfo = (MatchInfo)success;
+					onSuccess?.Invoke(matchInfo);
+					OnGetMatch?.Invoke(matchInfo);
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+
+			//MatchInfo matchInfo = networkClient.MatchInfo;
+			//if (matchInfo == null || string.IsNullOrEmpty(matchInfo.MatchId))
+			//	onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Match is not available yet." });
+			//else
+			//{
+			//	onSuccess?.Invoke(matchInfo);
+			//	OnGetMatch?.Invoke(matchInfo);
+			//}
 			canLeaveMatch = true;
 		}
 
