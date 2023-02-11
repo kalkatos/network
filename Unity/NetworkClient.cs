@@ -195,8 +195,7 @@ namespace Kalkatos.Network.Unity
 			{
 				PlayerId = playerId,
 				MatchId = MatchInfo.MatchId,
-				PublicChanges = changedStateInfo.PublicProperties,
-				PrivateChanges = changedStateInfo.PrivateProperties
+				Changes = changedStateInfo
 			};
 			networkClient.SendAction(request,
 				(success) =>
