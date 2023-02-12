@@ -11,13 +11,6 @@ namespace Kalkatos.Network.Unity
 {
 	public class NetworkClient : MonoBehaviour
 	{
-		public static event Action OnConnected;
-		public static event Action OnFindMatch;
-		public static event Action<MatchInfo> OnGetMatch;
-		public static event Action<MatchResponse> OnLeaveMatch;
-		public static event Action<StateInfo> OnStateChanged;
-		public static event Action<Dictionary<string, string>> OnSetPlayerData;
-
 		private static NetworkClient instance;
 		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
 		private static string playerId;
@@ -92,7 +85,6 @@ namespace Kalkatos.Network.Unity
 					playerId = response.PlayerId;
 					SaveNicknameLocally(response.SavedNickname);
 					onSuccess?.Invoke(response.IsAuthenticated);
-					OnConnected?.Invoke();
 				},
 				(failure) =>
 				{
@@ -117,7 +109,6 @@ namespace Kalkatos.Network.Unity
 				(success) =>
 				{
 					onSuccess?.Invoke("Success");
-					OnFindMatch?.Invoke();
 				},
 				(failure) =>
 				{
@@ -143,7 +134,6 @@ namespace Kalkatos.Network.Unity
 				{
 					MatchInfo matchInfo = (MatchInfo)success;
 					onSuccess?.Invoke(matchInfo);
-					OnGetMatch?.Invoke(matchInfo);
 				},
 				(failure) =>
 				{
@@ -180,7 +170,6 @@ namespace Kalkatos.Network.Unity
 					else
 					{
 						onSuccess?.Invoke("Success Leaving Match");
-						OnLeaveMatch?.Invoke(response);
 					}
 				},
 				(failure) =>
@@ -202,7 +191,6 @@ namespace Kalkatos.Network.Unity
 				{
 					StateInfo state = (StateInfo)success;
 					onSuccess?.Invoke(state);
-					OnStateChanged?.Invoke(state);
 				}, 
 				(failure) =>
 				{
@@ -224,7 +212,6 @@ namespace Kalkatos.Network.Unity
 				{
 					StateInfo state = (StateInfo)success;
 					onSuccess?.Invoke(state);
-					OnStateChanged?.Invoke(state);
 				},
 				(failure) =>
 				{

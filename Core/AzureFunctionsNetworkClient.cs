@@ -11,11 +11,8 @@ namespace Kalkatos.Network
 
 	public class AzureFunctionsNetworkClient : NetworkEventDispatcher, INetworkClient
 	{
-		public event Action<byte, object> OnEventReceived;
-
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
-		private int delayForFirstCheck = 8;
 		private int delayBetweenChecks = 2;
 
 		public string MyId { get; private set; }
@@ -159,9 +156,9 @@ namespace Kalkatos.Network
 					new StringContent(connectInfoSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
-				if (loginResponse.IsError)
+				if (loginResponse == null || loginResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {loginResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {loginResponse?.Message ?? "Server internal error"}");
 					onFailure?.Invoke(new NetworkError { Message = loginResponse.Message });
 				}
 				else
@@ -194,9 +191,9 @@ namespace Kalkatos.Network
 					new StringContent(MyId));
 				string result = await response.Content.ReadAsStringAsync();
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
-				if (findMatchResponse.IsError)
+				if (findMatchResponse == null || findMatchResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {findMatchResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {findMatchResponse?.Message ?? "Server internal error"}");
 					onFailure?.Invoke(new NetworkError { Message = findMatchResponse.Message }); 
 				}
 				else
@@ -226,9 +223,9 @@ namespace Kalkatos.Network
 				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
 				string result = await response.Content.ReadAsStringAsync();
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
-				if (matchResponse.IsError)
+				if (matchResponse == null || matchResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatch)}: {matchResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatch)}: {matchResponse?.Message ?? "Server internal error"}");
 					MatchInfo = null;
 					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = matchResponse.Message }); 
 				}
@@ -258,9 +255,9 @@ namespace Kalkatos.Network
 				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
 				string result = await response.Content.ReadAsStringAsync();
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
-				if (matchResponse.IsError)
+				if (matchResponse == null || matchResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {matchResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {matchResponse?.Message ?? "Server internal error"}");
 					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = matchResponse.Message });
 				}
 				else
@@ -288,9 +285,9 @@ namespace Kalkatos.Network
 					new StringContent(actionRequestSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
-				if (actionResponse.IsError)
+				if (actionResponse == null || actionResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SendAction)}: {actionResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SendAction)}: {actionResponse?.Message ?? "Server internal error"}");
 					onFailure?.Invoke(new NetworkError { Message = actionResponse.Message }); 
 				}
 				else
@@ -319,9 +316,9 @@ namespace Kalkatos.Network
 					new StringContent(stateRequestSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
-				if (stateResponse.IsError)
+				if (stateResponse == null || stateResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {stateResponse.Message}");
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {stateResponse?.Message ?? "Server internal error" }");
 					onFailure?.Invoke(new NetworkError { Message = stateResponse.Message }); 
 				}
 				else
