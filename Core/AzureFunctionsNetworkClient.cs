@@ -158,8 +158,9 @@ namespace Kalkatos.Network
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 				if (loginResponse == null || loginResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {loginResponse?.Message ?? "Server internal error"}");
-					onFailure?.Invoke(new NetworkError { Message = loginResponse.Message });
+					string message = loginResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message });
 				}
 				else
 				{
@@ -193,8 +194,9 @@ namespace Kalkatos.Network
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (findMatchResponse == null || findMatchResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {findMatchResponse?.Message ?? "Server internal error"}");
-					onFailure?.Invoke(new NetworkError { Message = findMatchResponse.Message }); 
+					string message = findMatchResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message }); 
 				}
 				else
 				{
@@ -225,9 +227,10 @@ namespace Kalkatos.Network
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse == null || matchResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatch)}: {matchResponse?.Message ?? "Server internal error"}");
+					string message = matchResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatch)}: {message}");
 					MatchInfo = null;
-					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = matchResponse.Message }); 
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = message }); 
 				}
 				else
 				{
@@ -257,8 +260,9 @@ namespace Kalkatos.Network
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse == null || matchResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {matchResponse?.Message ?? "Server internal error"}");
-					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = matchResponse.Message });
+					string message = matchResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {message}");
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = message });
 				}
 				else
 				{
@@ -287,8 +291,9 @@ namespace Kalkatos.Network
 				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
 				if (actionResponse == null || actionResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SendAction)}: {actionResponse?.Message ?? "Server internal error"}");
-					onFailure?.Invoke(new NetworkError { Message = actionResponse.Message }); 
+					string message = actionResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SendAction)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message }); 
 				}
 				else
 				{
@@ -318,8 +323,9 @@ namespace Kalkatos.Network
 				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
 				if (stateResponse == null || stateResponse.IsError)
 				{
-					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {stateResponse?.Message ?? "Server internal error" }");
-					onFailure?.Invoke(new NetworkError { Message = stateResponse.Message }); 
+					string message = stateResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message }); 
 				}
 				else
 				{
