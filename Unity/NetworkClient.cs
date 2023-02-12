@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using Kalkatos.Network.Model;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using Newtonsoft.Json;
-using UnityEditor.PackageManager.Requests;
 
 namespace Kalkatos.Network.Unity
 {
@@ -16,8 +14,8 @@ namespace Kalkatos.Network.Unity
 		private static string playerId;
 		private static string playerRegion;
 		private static string nickname;
-		private static string localTestToken;
 		private static bool canLeaveMatch = true;
+		private static string localTestToken;
 
 		private const string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
 		private const string consonantsLower = "bcdfghjklmnpqrstvwxz";
@@ -39,9 +37,15 @@ namespace Kalkatos.Network.Unity
 			}
 
 			DontDestroyOnLoad(this);
+#if UNITY_EDITOR
+			Storage.SetFileName($"{GetDeviceIdentifier()}.json");
+#endif
 			nickname = Storage.Load("Nickname", "");
 			if (string.IsNullOrEmpty(nickname))
+			{
 				nickname = "Guest-" + RandomName(6);
+				SaveNicknameLocally(nickname);
+			}
 		}
 
 		// =========================================================  P U B L I C ==============================================================
@@ -64,21 +68,14 @@ namespace Kalkatos.Network.Unity
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
 		{
-			string deviceId = SystemInfo.deviceUniqueIdentifier;
+			string deviceId = GetDeviceIdentifier();
+			Logger.Log("Connecting with identifier " + deviceId);
 
 			// TODO Get player region
 			playerRegion = "US";
 
-			// TODO Ask for player nickname or get it somewhere
-			nickname = Storage.Load("Nickname", "Guest-" + RandomName(6));
-
-			// Local test token
-			localTestToken = Storage.Load("LocalTestToken", "");
-
-			Logger.Log("Connecting with identifier " + deviceId + localTestToken);
-
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = deviceId + localTestToken, Region = playerRegion, Nickname = nickname },
+			networkClient.Connect(new LoginRequest { Identifier = deviceId, Region = playerRegion, Nickname = nickname },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
@@ -220,6 +217,22 @@ namespace Kalkatos.Network.Unity
 		}
 
 		// =========================================================  P R I V A T E ==============================================================
+
+		private static string GetDeviceIdentifier ()
+		{
+			string deviceId = SystemInfo.deviceUniqueIdentifier;
+#if UNITY_EDITOR
+			// Local test token
+			localTestToken = "editor";
+#if PARREL_SYNC
+			string cloneSuffix = ParrelSync.ClonesManager.GetArgument();
+			if (!string.IsNullOrEmpty(cloneSuffix))
+				localTestToken = cloneSuffix;
+#endif
+			deviceId += $"-{localTestToken}";
+#endif
+			return deviceId;
+		}
 
 		private static string RandomName (int length)
 		{
