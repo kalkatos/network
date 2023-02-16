@@ -9,6 +9,8 @@ namespace Kalkatos.Network.Unity
 {
 	public class NetworkClient : MonoBehaviour
 	{
+		[SerializeField] private string gameId;
+
 		private static NetworkClient instance;
 		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
 		private static string playerId;
@@ -75,7 +77,7 @@ namespace Kalkatos.Network.Unity
 			playerRegion = "US";
 
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = deviceId, Region = playerRegion, Nickname = nickname },
+			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Region = playerRegion, Nickname = nickname },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
