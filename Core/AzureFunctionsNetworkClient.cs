@@ -16,12 +16,12 @@ namespace Kalkatos.Network
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
 			//{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "LogIn",		 "https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "FindMatch",	 "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "GetMatch",		 "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "LeaveMatch",	 "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "SendAction",	 "https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "LogIn", "https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "FindMatch", "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "GetMatch", "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "LeaveMatch", "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "SendAction", "https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" }
 
 			{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
 			{ "LogIn", "http://localhost:7089/api/LogIn" },
@@ -29,7 +29,7 @@ namespace Kalkatos.Network
 			{ "GetMatch", "http://localhost:7089/api/GetMatch" },
 			{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
 			{ "SendAction", "http://localhost:7089/api/SendAction" },
-			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" },
+			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" }
 		};
 
 		public string MyId { get; private set; }
