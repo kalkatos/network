@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
@@ -14,6 +13,24 @@ namespace Kalkatos.Network
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
 		private int delayBetweenChecks = 2;
+		private Dictionary<string, string> uris = new Dictionary<string, string>
+		{
+			//{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "LogIn",		 "https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "FindMatch",	 "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "GetMatch",		 "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "LeaveMatch",	 "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "SendAction",	 "https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			//{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+
+			{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
+			{ "LogIn", "http://localhost:7089/api/LogIn" },
+			{ "FindMatch", "http://localhost:7089/api/FindMatch" },
+			{ "GetMatch", "http://localhost:7089/api/GetMatch" },
+			{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
+			{ "SendAction", "http://localhost:7089/api/SendAction" },
+			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" },
+		};
 
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
@@ -78,9 +95,7 @@ namespace Kalkatos.Network
 				PlayerId = MyId,
 				Data = changedData
 			};
-			_ = httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-					"http://localhost:7089/api/SetPlayerData",
+			_ = httpClient.PostAsync(uris["SetPlayerData"],
 					new StringContent(JsonConvert.SerializeObject(request)));
 			FireEvent((byte)NetworkEventKey.SetPlayerData, changedData);
 		}
@@ -150,9 +165,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-					"http://localhost:7089/api/LogIn",
+				var response = await httpClient.PostAsync(uris["LogIn"],
 					new StringContent(connectInfoSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
@@ -186,9 +199,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-					"http://localhost:7089/api/FindMatch",
+				var response = await httpClient.PostAsync(uris["FindMatch"],
 					new StringContent(MyId));
 				string result = await response.Content.ReadAsStringAsync();
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
@@ -219,9 +230,7 @@ namespace Kalkatos.Network
 
 			try
 			{
-				var response = await httpClient.PostAsync(
-				//"https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-				"http://localhost:7089/api/GetMatch",
+				var response = await httpClient.PostAsync(uris["GetMatch"],
 				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
 				string result = await response.Content.ReadAsStringAsync();
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
@@ -252,9 +261,7 @@ namespace Kalkatos.Network
 			MatchInfo = null;
 			try
 			{
-				var response = await httpClient.PostAsync(
-				//"https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-				"http://localhost:7089/api/LeaveMatch",
+				var response = await httpClient.PostAsync(uris["LeaveMatch"],
 				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
 				string result = await response.Content.ReadAsStringAsync();
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
@@ -283,9 +290,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-					"http://localhost:7089/api/SendAction",
+				var response = await httpClient.PostAsync(uris["SendAction"],
 					new StringContent(actionRequestSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
@@ -315,9 +320,7 @@ namespace Kalkatos.Network
 
 			try
 			{
-				var response = await httpClient.PostAsync(
-					//"https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==",
-					"http://localhost:7089/api/GetMatchState",
+				var response = await httpClient.PostAsync(uris["GetMatchState"],
 					new StringContent(stateRequestSerialized));
 				string result = await response.Content.ReadAsStringAsync();
 				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
