@@ -225,9 +225,6 @@ namespace Kalkatos.Network
 
 		private async Task GetMatchAsync (Action<object> onSuccess, Action<object> onFailure)
 		{
-			// Wait if the last GetMatch were made not long ago
-			await DelayBetweenMatchChecks();
-
 			try
 			{
 				var response = await httpClient.PostAsync(uris["GetMatch"],
@@ -316,8 +313,6 @@ namespace Kalkatos.Network
 
 		private async Task GetMatchStateAsync (string stateRequestSerialized, Action<object> onSuccess, Action<object> onFailure)
 		{
-			await DelayBetweenMatchChecks();
-
 			try
 			{
 				var response = await httpClient.PostAsync(uris["GetMatchState"],
@@ -343,14 +338,6 @@ namespace Kalkatos.Network
 				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match state." });
 			}
-		}
-
-		private async Task DelayBetweenMatchChecks ()
-		{
-			double timeSinceLastCheckMatch = (DateTime.UtcNow - lastCheckMatchTime).TotalSeconds;
-			if (timeSinceLastCheckMatch < delayBetweenChecks)
-				await Task.Delay((int)(delayBetweenChecks - timeSinceLastCheckMatch) * 1000);
-			lastCheckMatchTime = DateTime.UtcNow;
 		}
 
 		// =======================================================  S U B C L A S S E S  ========================================================
