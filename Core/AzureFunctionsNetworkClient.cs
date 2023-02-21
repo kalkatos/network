@@ -12,7 +12,6 @@ namespace Kalkatos.Network
 	{
 		private HttpClient httpClient = new HttpClient();
 		private DateTime lastCheckMatchTime;
-		private int delayBetweenChecks = 2;
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
 			//{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
