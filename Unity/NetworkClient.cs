@@ -177,13 +177,13 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void SendAction (StateInfo changedStateInfo, Action<StateInfo> onSuccess, Action<NetworkError> onFailure) 
+		public static void SendAction (ActionInfo action, Action<StateInfo> onSuccess, Action<NetworkError> onFailure) 
 		{
 			ActionRequest request = new ActionRequest
 			{
 				PlayerId = playerId,
 				MatchId = MatchInfo.MatchId,
-				Changes = changedStateInfo
+				Action = action
 			};
 			networkClient.SendAction(request,
 				(success) =>

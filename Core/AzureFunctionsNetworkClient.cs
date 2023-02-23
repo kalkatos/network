@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 
 namespace Kalkatos.Network
 {
-
 	public class AzureFunctionsNetworkClient : NetworkEventDispatcher, INetworkClient
 	{
 		private HttpClient httpClient = new HttpClient();
@@ -298,9 +297,8 @@ namespace Kalkatos.Network
 				}
 				else
 				{
-					StateInfo = actionResponse.AlteredState;
-					onSuccess?.Invoke(StateInfo);
-					FireEvent((byte)NetworkEventKey.SendAction, StateInfo);
+					onSuccess?.Invoke(null);
+					FireEvent((byte)NetworkEventKey.SendAction, null);
 				}
 			}
 			catch (Exception e)
