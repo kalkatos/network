@@ -297,8 +297,9 @@ namespace Kalkatos.Network
 				}
 				else
 				{
-					onSuccess?.Invoke(null);
-					FireEvent((byte)NetworkEventKey.SendAction, null);
+					StateInfo = actionResponse.AlteredState;
+					onSuccess?.Invoke(StateInfo);
+					FireEvent((byte)NetworkEventKey.SendAction, StateInfo);
 				}
 			}
 			catch (Exception e)
