@@ -177,11 +177,7 @@ namespace Kalkatos.Network
 				{
 					IsConnected = true;
 					MyId = loginResponse.PlayerId;
-					MyInfo = new PlayerInfo
-					{
-						Alias = loginResponse.PlayerAlias,
-						Nickname = loginResponse.SavedNickname,
-					};
+					MyInfo = loginResponse.MyInfo;
 					onSuccess?.Invoke(loginResponse);
 					FireEvent((byte)NetworkEventKey.Connect, loginResponse);
 				}

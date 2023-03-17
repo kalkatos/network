@@ -82,7 +82,7 @@ namespace Kalkatos.Network.Unity
 				{
 					LoginResponse response = (LoginResponse)success;
 					playerId = response.PlayerId;
-					SaveNicknameLocally(response.SavedNickname);
+					SaveNicknameLocally(response.MyInfo.Nickname);
 					onSuccess?.Invoke(response.IsAuthenticated);
 				},
 				(failure) =>
