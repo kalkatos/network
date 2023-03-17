@@ -30,6 +30,7 @@ namespace Kalkatos.Network
 			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" }
 		};
 
+		public string RegionCode { get; private set; }
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
 		public bool IsInRoom { get; private set; }
@@ -60,7 +61,7 @@ namespace Kalkatos.Network
 				return;
 			}
 
-			_ = ConnectAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
+			_ = ConnectAsync((LoginRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void SetNickname (string nickname)
@@ -159,19 +160,34 @@ namespace Kalkatos.Network
 
 		// ========================================================  P R I V A T E ===============================================================
 
-		private async Task ConnectAsync (string connectInfoSerialized, Action<object> onSuccess, Action<object> onFailure)
+		private async Task ConnectAsync (LoginRequest connectInfo, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
+				var responseIp = await httpClient.GetAsync("https://api.ipify.org");
+				string resultIp = await responseIp.Content.ReadAsStringAsync();
+				Logger.Log(resultIp);
+				RegionCode = "Default";
+				connectInfo.Region = "Default";
+			}
+			catch (Exception e)
+			{
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {e}");
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
+				return;
+			}
+
+			try
+			{
 				var response = await httpClient.PostAsync(uris["LogIn"],
-					new StringContent(connectInfoSerialized));
+					new StringContent(JsonConvert.SerializeObject(connectInfo)));
 				string result = await response.Content.ReadAsStringAsync();
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 				if (loginResponse == null || loginResponse.IsError)
 				{
 					string message = loginResponse?.Message ?? "Server internal error";
 					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {message}");
-					onFailure?.Invoke(new NetworkError { Message = message });
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = message });
 				}
 				else
 				{
@@ -185,7 +201,7 @@ namespace Kalkatos.Network
 			catch (Exception e)
 			{
 				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {e}");
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Server internal error." });
 			}
 		}
 

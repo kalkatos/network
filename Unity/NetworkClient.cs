@@ -73,11 +73,11 @@ namespace Kalkatos.Network.Unity
 			string deviceId = GetDeviceIdentifier();
 			Logger.Log("Connecting with identifier " + deviceId);
 
-			// TODO Get player region
-			playerRegion = "US";
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
 
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Region = playerRegion, Nickname = nickname },
+			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Nickname = nickname },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
