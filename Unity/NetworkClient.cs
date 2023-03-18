@@ -74,7 +74,10 @@ namespace Kalkatos.Network.Unity
 			Logger.Log("Connecting with identifier " + deviceId);
 
 			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
 
 			// Invoke network
 			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Nickname = nickname },
