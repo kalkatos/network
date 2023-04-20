@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
@@ -13,24 +14,23 @@ namespace Kalkatos.Network
 		private DateTime lastCheckMatchTime;
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
-			//{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "LogIn", "https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "FindMatch", "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "GetMatch", "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "LeaveMatch", "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "SendAction", "https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			//{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" }
+			{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			{ "LogIn", "https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			{ "FindMatch", "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			{ "GetMatch", "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			{ "LeaveMatch", "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			{ "SendAction", "https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
+			{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" }
 
-			{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
-			{ "LogIn", "http://localhost:7089/api/LogIn" },
-			{ "FindMatch", "http://localhost:7089/api/FindMatch" },
-			{ "GetMatch", "http://localhost:7089/api/GetMatch" },
-			{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
-			{ "SendAction", "http://localhost:7089/api/SendAction" },
-			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" }
+			//{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
+			//{ "LogIn", "http://localhost:7089/api/LogIn" },
+			//{ "FindMatch", "http://localhost:7089/api/FindMatch" },
+			//{ "GetMatch", "http://localhost:7089/api/GetMatch" },
+			//{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
+			//{ "SendAction", "http://localhost:7089/api/SendAction" },
+			//{ "GetMatchState", "http://localhost:7089/api/GetMatchState" }
 		};
 
-		public string RegionCode { get; private set; }
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
 		public bool IsInRoom { get; private set; }
@@ -101,12 +101,36 @@ namespace Kalkatos.Network
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			_ = FindMatchAsync(onSuccess, onFailure);
+			if (!IsConnected)
+			{
+				Logger.LogError("Not connected.");
+				return;
+			}
+
+			if (!(parameter is FindMatchRequest))
+			{
+				Logger.LogError("Wrong parameter. Must be a Dictionary<string, string>.");
+				return;
+			}
+
+			_ = FindMatchAsync((FindMatchRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			_ = GetMatchAsync(onSuccess, onFailure);
+			if (!IsConnected)
+			{
+				Logger.LogError("Not connected.");
+				return;
+			}
+
+			if (!(parameter is MatchRequest))
+			{
+				Logger.LogError("Wrong parameter. Must be a Dictionary<string, string>.");
+				return;
+			}
+
+			_ = GetMatchAsync((MatchRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -167,8 +191,6 @@ namespace Kalkatos.Network
 				var responseIp = await httpClient.GetAsync("https://api.ipify.org");
 				string resultIp = await responseIp.Content.ReadAsStringAsync();
 				Logger.Log(resultIp);
-				RegionCode = "Default";
-				connectInfo.Region = "Default";
 			}
 			catch (Exception e)
 			{
@@ -205,12 +227,11 @@ namespace Kalkatos.Network
 			}
 		}
 
-		private async Task FindMatchAsync (Action<object> onSuccess, Action<object> onFailure)
+		private async Task FindMatchAsync (FindMatchRequest request, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["FindMatch"],
-					new StringContent(MyId));
+				var response = await httpClient.PostAsync(uris["FindMatch"], new StringContent(JsonConvert.SerializeObject(request)));
 				string result = await response.Content.ReadAsStringAsync();
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (findMatchResponse == null || findMatchResponse.IsError)
@@ -233,12 +254,11 @@ namespace Kalkatos.Network
 			}
 		}
 
-		private async Task GetMatchAsync (Action<object> onSuccess, Action<object> onFailure)
+		private async Task GetMatchAsync (MatchRequest request, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["GetMatch"],
-				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
+				var response = await httpClient.PostAsync(uris["GetMatch"], new StringContent(JsonConvert.SerializeObject(request)));
 				string result = await response.Content.ReadAsStringAsync();
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse == null || matchResponse.IsError)

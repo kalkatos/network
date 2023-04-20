@@ -14,7 +14,7 @@ namespace Kalkatos.Network.Unity
 		private static NetworkClient instance;
 		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
 		private static string playerId;
-		private static string playerRegion;
+		private static string playerRegion = "Default";
 		private static string nickname;
 		private static bool canLeaveMatch = true;
 		private static string localTestToken;
@@ -80,7 +80,7 @@ namespace Kalkatos.Network.Unity
 			}
 
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Nickname = nickname },
+			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Nickname = nickname, Region = playerRegion },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
@@ -107,7 +107,13 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
-			networkClient.FindMatch(null,
+			networkClient.FindMatch(
+				new FindMatchRequest
+				{
+					GameId = instance.gameId,
+					PlayerId = playerId,
+					Region = playerRegion
+				},
 				(success) =>
 				{
 					onSuccess?.Invoke("Success");
@@ -126,12 +132,14 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
-			MatchRequest request = new MatchRequest
-			{
-				PlayerId = playerId,
-				MatchId = networkClient.MatchInfo?.MatchId,
-			};
-			networkClient.GetMatch(request,
+			networkClient.GetMatch(
+				new MatchRequest
+				{
+					PlayerId = playerId,
+					MatchId = networkClient.MatchInfo?.MatchId,
+					GameId = instance.gameId,
+					Region = playerRegion
+				},
 				(success) =>
 				{
 					MatchInfo matchInfo = (MatchInfo)success;
@@ -180,7 +188,7 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void SendAction (ActionInfo action, Action<StateInfo> onSuccess, Action<NetworkError> onFailure) 
+		public static void SendAction (ActionInfo action, Action<StateInfo> onSuccess, Action<NetworkError> onFailure)
 		{
 			ActionRequest request = new ActionRequest
 			{
@@ -193,7 +201,7 @@ namespace Kalkatos.Network.Unity
 				{
 					StateInfo state = (StateInfo)success;
 					onSuccess?.Invoke(state);
-				}, 
+				},
 				(failure) =>
 				{
 					onFailure?.Invoke((NetworkError)failure);
