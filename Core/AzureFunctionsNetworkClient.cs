@@ -14,13 +14,13 @@ namespace Kalkatos.Network
 		private DateTime lastCheckMatchTime;
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
-			{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			{ "LogIn", "https://kalkatos-games.azurewebsites.net/api/LogIn?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			{ "FindMatch", "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			{ "GetMatch", "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			{ "LeaveMatch", "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			{ "SendAction", "https://kalkatos-games.azurewebsites.net/api/SendAction?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" },
-			{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=tg4Mjid6wgAWO4NMjCME8hA64wqt5je3VRI-Vj2WexyZAzFuduPOUA==" }
+			{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
+			{ "LogIn", "https://kalkatos-games.azurewebsites.net/api/LogIn?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
+			{ "FindMatch", "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
+			{ "GetMatch", "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
+			{ "LeaveMatch", "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
+			{ "SendAction", "https://kalkatos-games.azurewebsites.net/api/SendAction?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
+			{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" }
 
 			//{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
 			//{ "LogIn", "http://localhost:7089/api/LogIn" },
