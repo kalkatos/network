@@ -240,6 +240,12 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
+
 			int lastHash = StateInfo?.Hash ?? 0;
 			StateRequest request = new StateRequest
 			{
