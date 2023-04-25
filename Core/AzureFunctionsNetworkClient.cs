@@ -187,19 +187,6 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var responseIp = await httpClient.GetAsync("https://api.ipify.org");
-				string resultIp = await responseIp.Content.ReadAsStringAsync();
-				Logger.Log(resultIp);
-			}
-			catch (Exception e)
-			{
-				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {e}");
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
-				return;
-			}
-
-			try
-			{
 				var response = await httpClient.PostAsync(uris["LogIn"],
 					new StringContent(JsonConvert.SerializeObject(connectInfo)));
 				string result = await response.Content.ReadAsStringAsync();
