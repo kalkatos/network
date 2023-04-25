@@ -102,6 +102,12 @@ namespace Kalkatos.Network.Unity
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+
 			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
@@ -126,6 +132,12 @@ namespace Kalkatos.Network.Unity
 
 		public static void GetMatch (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
 		{
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+
 			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
@@ -163,6 +175,12 @@ namespace Kalkatos.Network.Unity
 
 		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+
 			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
@@ -190,6 +208,12 @@ namespace Kalkatos.Network.Unity
 
 		public static void SendAction (ActionInfo action, Action<StateInfo> onSuccess, Action<NetworkError> onFailure)
 		{
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+
 			ActionRequest request = new ActionRequest
 			{
 				PlayerId = playerId,
@@ -210,6 +234,12 @@ namespace Kalkatos.Network.Unity
 
 		public static void GetMatchState (Action<StateInfo> onSuccess, Action<NetworkError> onFailure)
 		{
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+
 			int lastHash = StateInfo?.Hash ?? 0;
 			StateRequest request = new StateRequest
 			{
