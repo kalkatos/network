@@ -270,6 +270,12 @@ namespace Kalkatos.Network
 				else
 				{
 					Logger.Log($"Got match = {JsonConvert.SerializeObject(matchResponse)}");
+					if (matchResponse.IsOver)
+					{
+						MatchInfo = null;
+						onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotFound, Message = "Match is over." });
+						return;
+					}
 					MatchInfo = new MatchInfo { MatchId = matchResponse.MatchId, Players = matchResponse.Players };
 					onSuccess?.Invoke(MatchInfo);
 					FireEvent((byte)NetworkEventKey.GetMatch, MatchInfo);
