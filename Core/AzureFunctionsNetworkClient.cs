@@ -38,7 +38,7 @@ namespace Kalkatos.Network
 		public MatchInfo MatchInfo { get; private set; }
 		public StateInfo StateInfo { get; private set; }
 
-		// =========================================================  P U B L I C  ==============================================================
+		// ████████████████████████████████████████████ P U B L I C ████████████████████████████████████████████
 
 		/// <summary>
 		/// 
@@ -181,7 +181,7 @@ namespace Kalkatos.Network
 			
 		}
 
-		// ========================================================  P R I V A T E ===============================================================
+		/// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
 		private async Task ConnectAsync (LoginRequest connectInfo, Action<object> onSuccess, Action<object> onFailure)
 		{
@@ -362,7 +362,7 @@ namespace Kalkatos.Network
 			}
 		}
 
-		// =======================================================  S U B C L A S S E S  ========================================================
+		// ████████████████████████████████████████████ S U B C L A S S E S ████████████████████████████████████████████
 
 		public class FunctionInfo
 		{
