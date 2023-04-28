@@ -10,7 +10,6 @@ namespace Kalkatos.Network
 	public class AzureFunctionsNetworkClient : NetworkEventDispatcher, INetworkClient
 	{
 		private HttpClient httpClient = new HttpClient();
-		private DateTime lastCheckMatchTime;
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
 			{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
@@ -229,7 +228,6 @@ namespace Kalkatos.Network
 				else
 				{
 					onSuccess?.Invoke(null);
-					lastCheckMatchTime = DateTime.UtcNow;
 					FireEvent((byte)NetworkEventKey.FindMatch, null);
 				}
 			}
