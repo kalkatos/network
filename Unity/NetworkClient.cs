@@ -186,19 +186,17 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
-			networkClient.LeaveMatch(null,
+			networkClient.LeaveMatch(
+				new MatchRequest 
+				{ 
+					GameId = instance.gameId, 
+					Region = playerRegion,
+					PlayerId = playerId,
+					MatchId = networkClient.MatchInfo?.MatchId ?? ""
+				},
 				(success) =>
 				{
-					MatchResponse response = success as MatchResponse;
-					if (response.MatchId != null)
-					{
-						canLeaveMatch = false;
-						instance.StartCoroutine(WaitUntilMatchGotToLeave(() => onSuccess?.Invoke("Success Leaving Match")));
-					}
-					else
-					{
-						onSuccess?.Invoke("Success Leaving Match");
-					}
+					onSuccess?.Invoke("Success Leaving Match");
 				},
 				(failure) =>
 				{
@@ -211,6 +209,11 @@ namespace Kalkatos.Network.Unity
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+			if (MatchInfo == null || string.IsNullOrEmpty(MatchInfo.MatchId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Does not have a match to send action to." });
 				return;
 			}
 

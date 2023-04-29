@@ -124,7 +124,7 @@ namespace Kalkatos.Network
 
 			if (!(parameter is MatchRequest))
 			{
-				Logger.LogError("Wrong parameter. Must be a Dictionary<string, string>.");
+				Logger.LogError("Wrong parameter. Must be a MatchRequest.");
 				return;
 			}
 
@@ -133,7 +133,19 @@ namespace Kalkatos.Network
 
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-			_ = LeaveMatchAsync(onSuccess, onFailure);
+			if (!IsConnected)
+			{
+				Logger.LogError("Not connected.");
+				return;
+			}
+
+			if (!(parameter is MatchRequest))
+			{
+				Logger.LogError("Wrong parameter. Must be a MatchRequest.");
+				return;
+			}
+
+			_ = LeaveMatchAsync((MatchRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void SendAction (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -273,27 +285,27 @@ namespace Kalkatos.Network
 			}
 		}
 
-		private async Task LeaveMatchAsync (Action<object> onSuccess, Action<object> onFailure)
+		private async Task LeaveMatchAsync (MatchRequest request, Action<object> onSuccess, Action<object> onFailure)
 		{
 			MatchInfo = null;
 			try
 			{
 				var response = await httpClient.PostAsync(uris["LeaveMatch"],
-				new StringContent(JsonConvert.SerializeObject(new MatchRequest { PlayerId = MyId, MatchId = MatchInfo?.MatchId ?? "" })));
+				new StringContent(JsonConvert.SerializeObject(request)));
 				string result = await response.Content.ReadAsStringAsync();
-				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
-				if (matchResponse == null || matchResponse.IsError)
+				Response leaveMatchResponse = JsonConvert.DeserializeObject<Response>(result);
+				if (leaveMatchResponse == null || leaveMatchResponse.IsError)
 				{
-					string message = matchResponse?.Message ?? "Server internal error";
+					string message = leaveMatchResponse?.Message ?? "Server internal error";
 					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(LeaveMatch)}: {message}");
 					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = message });
 				}
 				else
 				{
-					string matchId = matchResponse.MatchId != null ? matchResponse.MatchId : "<unidentified>";
-					Logger.Log($"Left match {matchId}, Message = {matchResponse.Message}");
-					onSuccess?.Invoke(matchResponse);
-					FireEvent((byte)NetworkEventKey.LeaveMatch, matchResponse);
+					string matchId = MatchInfo?.MatchId ?? "<unknown>";
+					Logger.Log($"Left match {matchId}, Message = {leaveMatchResponse.Message}");
+					onSuccess?.Invoke(leaveMatchResponse);
+					FireEvent((byte)NetworkEventKey.LeaveMatch, leaveMatchResponse);
 				}
 			}
 			catch (Exception e)
