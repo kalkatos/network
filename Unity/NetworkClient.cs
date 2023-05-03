@@ -7,12 +7,13 @@ using Random = UnityEngine.Random;
 
 namespace Kalkatos.Network.Unity
 {
+
 	public class NetworkClient : MonoBehaviour
 	{
 		[SerializeField] private string gameId;
 
 		private static NetworkClient instance;
-		private static INetworkClient networkClient = new AzureFunctionsNetworkClient();
+		private static INetworkClient networkClient;
 		private static string playerId;
 		private static string playerRegion = "Default";
 		private static string nickname;
@@ -38,6 +39,7 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
+			networkClient = new AzureFunctionsNetworkClient(new UnityWebRequestComnunicator(this));
 			DontDestroyOnLoad(this);
 #if UNITY_EDITOR
 			Storage.SetFileName($"{GetDeviceIdentifier()}.json");

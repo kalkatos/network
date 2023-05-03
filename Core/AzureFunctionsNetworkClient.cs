@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
@@ -9,7 +8,6 @@ namespace Kalkatos.Network
 {
 	public class AzureFunctionsNetworkClient : NetworkEventDispatcher, INetworkClient
 	{
-		private HttpClient httpClient = new HttpClient();
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
 			{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
@@ -28,6 +26,13 @@ namespace Kalkatos.Network
 			//{ "SendAction", "http://localhost:7089/api/SendAction" },
 			//{ "GetMatchState", "http://localhost:7089/api/GetMatchState" }
 		};
+
+		private ICommunicator communicator;
+
+		public AzureFunctionsNetworkClient (ICommunicator communicator)
+		{
+			this.communicator = communicator;
+		}
 
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
@@ -92,8 +97,7 @@ namespace Kalkatos.Network
 				PlayerId = MyId,
 				Data = changedData
 			};
-			_ = httpClient.PostAsync(uris["SetPlayerData"],
-					new StringContent(JsonConvert.SerializeObject(request)));
+			_ = communicator.Post(uris["SetPlayerData"], JsonConvert.SerializeObject(request));
 			FireEvent((byte)NetworkEventKey.SetPlayerData, changedData);
 		}
 
@@ -198,9 +202,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["LogIn"],
-					new StringContent(JsonConvert.SerializeObject(connectInfo)));
-				string result = await response.Content.ReadAsStringAsync();
+				string result = await communicator.Post(uris["LogIn"], JsonConvert.SerializeObject(connectInfo));
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 				if (loginResponse == null || loginResponse.IsError)
 				{
@@ -228,8 +230,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["FindMatch"], new StringContent(JsonConvert.SerializeObject(request)));
-				string result = await response.Content.ReadAsStringAsync();
+				string result = await communicator.Post(uris["FindMatch"], JsonConvert.SerializeObject(request));
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (findMatchResponse == null || findMatchResponse.IsError)
 				{
@@ -254,8 +255,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["GetMatch"], new StringContent(JsonConvert.SerializeObject(request)));
-				string result = await response.Content.ReadAsStringAsync();
+				string result = await communicator.Post(uris["GetMatch"], JsonConvert.SerializeObject(request));
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse == null || matchResponse.IsError)
 				{
@@ -290,9 +290,7 @@ namespace Kalkatos.Network
 			MatchInfo = null;
 			try
 			{
-				var response = await httpClient.PostAsync(uris["LeaveMatch"],
-				new StringContent(JsonConvert.SerializeObject(request)));
-				string result = await response.Content.ReadAsStringAsync();
+				string result = await communicator.Post(uris["LeaveMatch"], JsonConvert.SerializeObject(request));
 				Response leaveMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (leaveMatchResponse == null || leaveMatchResponse.IsError)
 				{
@@ -319,9 +317,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["SendAction"],
-					new StringContent(actionRequestSerialized));
-				string result = await response.Content.ReadAsStringAsync();
+				string result = await communicator.Post(uris["SendAction"], actionRequestSerialized);
 				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
 				if (actionResponse == null || actionResponse.IsError)
 				{
@@ -347,9 +343,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				var response = await httpClient.PostAsync(uris["GetMatchState"],
-					new StringContent(stateRequestSerialized));
-				string result = await response.Content.ReadAsStringAsync();
+				string result = await communicator.Post(uris["GetMatchState"], stateRequestSerialized);
 				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
 				if (stateResponse == null || stateResponse.IsError)
 				{
