@@ -1,10 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 
 namespace Kalkatos.Network
 {
 	public interface ICommunicator
 	{
-		Task<string> Get (string url);
-		Task<string> Post (string url, string message);
+		void Get (string url, Action<string> callback);
+		void Post (string url, string message, Action<string> callback);
 	}
 }

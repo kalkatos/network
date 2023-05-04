@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -15,21 +16,29 @@ namespace Kalkatos.Network.Unity
 			this.mono = mono;
 		}
 
-		public async Task<string> Get (string url)
+		public void Get (string url, Action<string> callback)
+		{
+			mono.StartCoroutine(GetCoroutine(url, callback));
+		}
+
+		public void Post (string url, string message, Action<string> callback)
+		{
+			mono.StartCoroutine(PostCoroutine(url, message, callback));
+		}
+
+		private IEnumerator GetCoroutine (string url, Action<string> callback) 
 		{
 			using (UnityWebRequest request = UnityWebRequest.Get(url))
 			{
-				TaskCompletionSource<bool> taskAwaiter = new TaskCompletionSource<bool>();
 				request.downloadHandler = new DownloadHandlerBuffer();
 				UnityWebRequestAsyncOperation operation = request.SendWebRequest();
-				mono.StartCoroutine(WaitOperationCoroutine(operation, taskAwaiter));
-				await taskAwaiter.Task;
+				yield return operation;
 				string result = request.downloadHandler.text;
-				return result;
+				callback?.Invoke(result);
 			}
 		}
 
-		public async Task<string> Post (string url, string message)
+		private IEnumerator PostCoroutine (string url, string message, Action<string> callback)
 		{
 			using (UnityWebRequest request = new UnityWebRequest(url))
 			{
@@ -40,17 +49,10 @@ namespace Kalkatos.Network.Unity
 				request.downloadHandler = new DownloadHandlerBuffer();
 				TaskCompletionSource<bool> taskAwaiter = new TaskCompletionSource<bool>();
 				UnityWebRequestAsyncOperation operation = request.SendWebRequest();
-				mono.StartCoroutine(WaitOperationCoroutine(operation, taskAwaiter));
-				await taskAwaiter.Task;
+				yield return operation;
 				string result = request.downloadHandler.text;
-				return result;
+				callback?.Invoke(result);
 			}
-		}
-
-		private IEnumerator WaitOperationCoroutine (UnityWebRequestAsyncOperation operation, TaskCompletionSource<bool> awaiter)
-		{
-			yield return operation;
-			awaiter.SetResult(true);
 		}
 	}
 }

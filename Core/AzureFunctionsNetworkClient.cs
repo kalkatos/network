@@ -97,7 +97,7 @@ namespace Kalkatos.Network
 				PlayerId = MyId,
 				Data = changedData
 			};
-			_ = communicator.Post(uris["SetPlayerData"], JsonConvert.SerializeObject(request));
+			communicator.Post(uris["SetPlayerData"], JsonConvert.SerializeObject(request), null);
 			FireEvent((byte)NetworkEventKey.SetPlayerData, changedData);
 		}
 
@@ -198,11 +198,19 @@ namespace Kalkatos.Network
 
 		/// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
+		private async Task<string> Post (string uriTag, string content)
+		{
+			TaskCompletionSource<string> taskAwaiter = new TaskCompletionSource<string>();
+			communicator.Post(uris[uriTag], content, response => taskAwaiter.TrySetResult(response));
+			return await taskAwaiter.Task;
+		}
+
 		private async Task ConnectAsync (LoginRequest connectInfo, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
-				string result = await communicator.Post(uris["LogIn"], JsonConvert.SerializeObject(connectInfo));
+				string result = await Post("LogIn", JsonConvert.SerializeObject(connectInfo));
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Result received: {result}");
 				LoginResponse loginResponse = JsonConvert.DeserializeObject<LoginResponse>(result);
 				if (loginResponse == null || loginResponse.IsError)
 				{
@@ -230,7 +238,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				string result = await communicator.Post(uris["FindMatch"], JsonConvert.SerializeObject(request));
+				string result = await Post("FindMatch", JsonConvert.SerializeObject(request));
 				Response findMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (findMatchResponse == null || findMatchResponse.IsError)
 				{
@@ -255,7 +263,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				string result = await communicator.Post(uris["GetMatch"], JsonConvert.SerializeObject(request));
+				string result = await Post("GetMatch", JsonConvert.SerializeObject(request));
 				MatchResponse matchResponse = JsonConvert.DeserializeObject<MatchResponse>(result);
 				if (matchResponse == null || matchResponse.IsError)
 				{
@@ -290,7 +298,7 @@ namespace Kalkatos.Network
 			MatchInfo = null;
 			try
 			{
-				string result = await communicator.Post(uris["LeaveMatch"], JsonConvert.SerializeObject(request));
+				string result = await Post("LeaveMatch", JsonConvert.SerializeObject(request));
 				Response leaveMatchResponse = JsonConvert.DeserializeObject<Response>(result);
 				if (leaveMatchResponse == null || leaveMatchResponse.IsError)
 				{
@@ -317,7 +325,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				string result = await communicator.Post(uris["SendAction"], actionRequestSerialized);
+				string result = await Post("SendAction", actionRequestSerialized);
 				ActionResponse actionResponse = JsonConvert.DeserializeObject<ActionResponse>(result);
 				if (actionResponse == null || actionResponse.IsError)
 				{
@@ -343,7 +351,7 @@ namespace Kalkatos.Network
 		{
 			try
 			{
-				string result = await communicator.Post(uris["GetMatchState"], stateRequestSerialized);
+				string result = await Post("GetMatchState", stateRequestSerialized);
 				StateResponse stateResponse = JsonConvert.DeserializeObject<StateResponse>(result);
 				if (stateResponse == null || stateResponse.IsError)
 				{

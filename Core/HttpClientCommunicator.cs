@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Kalkatos.Network
@@ -7,16 +8,28 @@ namespace Kalkatos.Network
 	{
 		private HttpClient httpClient = new HttpClient();
 
-		public async Task<string> Get (string url)
+		public void Get (string url, Action<string> callback)
 		{
-			var response = await httpClient.GetAsync(url);
-			return await response.Content.ReadAsStringAsync();
+			_ = GetAsync(url, callback);
 		}
 
-		public async Task<string> Post (string url, string message)
+		public void Post (string url, string message, Action<string> callback)
+		{
+			_ = PostAsync(url, message, callback);
+		}
+
+		private async Task GetAsync (string url, Action<string> callback)
+		{
+			var response = await httpClient.GetAsync(url);
+			string result = await response.Content.ReadAsStringAsync();
+			callback?.Invoke(result);
+		}
+
+		private async Task PostAsync (string url, string message, Action<string> callback)
 		{
 			var response = await httpClient.PostAsync(url, new StringContent(message));
-			return await response.Content.ReadAsStringAsync();
+			string result = await response.Content.ReadAsStringAsync();
+			callback?.Invoke(result);
 		}
 	}
 }

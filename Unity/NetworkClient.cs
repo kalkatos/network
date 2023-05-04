@@ -40,6 +40,7 @@ namespace Kalkatos.Network.Unity
 			}
 
 			networkClient = new AzureFunctionsNetworkClient(new UnityWebRequestComnunicator(this));
+			//networkClient = new AzureFunctionsNetworkClient(new HttpClientCommunicator());
 			DontDestroyOnLoad(this);
 #if UNITY_EDITOR
 			Storage.SetFileName($"{GetDeviceIdentifier()}.json");
@@ -275,6 +276,12 @@ namespace Kalkatos.Network.Unity
 		private static string GetDeviceIdentifier ()
 		{
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
+			if (deviceId == SystemInfo.unsupportedIdentifier)
+			{
+				Logger.Log("Getting a local unique identifier");
+				deviceId = Storage.Load("LocalUniqueIdentifier", Guid.NewGuid().ToString());
+				Storage.Save("LocalUniqueIdentifier", deviceId);
+			}
 #if UNITY_EDITOR
 			// Local test token
 			localTestToken = "editor";
