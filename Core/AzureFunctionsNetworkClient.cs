@@ -10,23 +10,16 @@ namespace Kalkatos.Network
 	{
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
-			{ "SetPlayerData", "https://kalkatos-games.azurewebsites.net/api/SetPlayerData?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
-			{ "LogIn", "https://kalkatos-games.azurewebsites.net/api/LogIn?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
-			{ "FindMatch", "https://kalkatos-games.azurewebsites.net/api/FindMatch?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
-			{ "GetMatch", "https://kalkatos-games.azurewebsites.net/api/GetMatch?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
-			{ "LeaveMatch", "https://kalkatos-games.azurewebsites.net/api/LeaveMatch?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
-			{ "SendAction", "https://kalkatos-games.azurewebsites.net/api/SendAction?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" },
-			{ "GetMatchState", "https://kalkatos-games.azurewebsites.net/api/GetMatchState?code=oFl2jbDCTLC7yniharMjY1qjJpBq7tqArNehC-SHMa0sAzFuFMdPgg==" }
-
-			//{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
-			//{ "LogIn", "http://localhost:7089/api/LogIn" },
-			//{ "FindMatch", "http://localhost:7089/api/FindMatch" },
-			//{ "GetMatch", "http://localhost:7089/api/GetMatch" },
-			//{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
-			//{ "SendAction", "http://localhost:7089/api/SendAction" },
-			//{ "GetMatchState", "http://localhost:7089/api/GetMatchState" }
+			{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
+			{ "LogIn", "http://localhost:7089/api/LogIn" },
+			{ "FindMatch", "http://localhost:7089/api/FindMatch" },
+			{ "GetMatch", "http://localhost:7089/api/GetMatch" },
+			{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
+			{ "SendAction", "http://localhost:7089/api/SendAction" },
+			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" },
+			{ "GetGameConfig", "http://localhost:7089/api/GetGameConfig" }
 		};
-
+		private bool loadUris = true;
 		private ICommunicator communicator;
 
 		public AzureFunctionsNetworkClient (ICommunicator communicator)
@@ -63,6 +56,9 @@ namespace Kalkatos.Network
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
 				return;
 			}
+			string urisSerialized = Storage.Load("Uris", "");
+			if (loadUris && !string.IsNullOrEmpty(urisSerialized))
+				uris = JsonConvert.DeserializeObject<Dictionary<string, string>>(urisSerialized);
 
 			_ = ConnectAsync((LoginRequest)parameter, onSuccess, onFailure);
 		}
@@ -220,6 +216,13 @@ namespace Kalkatos.Network
 				}
 				else
 				{
+					string configResult = await Post("GetGameConfig", JsonConvert.SerializeObject(new GameDataRequest
+					{
+						GameId = connectInfo.GameId,
+						PlayerId = loginResponse.PlayerId
+					}));
+
+
 					IsConnected = true;
 					MyId = loginResponse.PlayerId;
 					MyInfo = loginResponse.MyInfo;
