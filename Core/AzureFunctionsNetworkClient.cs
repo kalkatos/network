@@ -17,7 +17,7 @@ namespace Kalkatos.Network
 			{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
 			{ "SendAction", "http://localhost:7089/api/SendAction" },
 			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" },
-			{ "GetGameConfig", "http://localhost:7089/api/GetGameConfig" }
+			{ "GetGameSettings", "http://localhost:7089/api/GetGameSettings" }
 		};
 		private bool loadUris = true;
 		private ICommunicator communicator;
@@ -216,11 +216,11 @@ namespace Kalkatos.Network
 				}
 				else
 				{
-					string configResult = await Post("GetGameConfig", JsonConvert.SerializeObject(new GameDataRequest
-					{
-						GameId = connectInfo.GameId,
-						PlayerId = loginResponse.PlayerId
-					}));
+					//string configResult = await Post("GetGameSettings", JsonConvert.SerializeObject(new GameDataRequest
+					//{
+					//	GameId = connectInfo.GameId,
+					//	PlayerId = loginResponse.PlayerId
+					//}));
 
 
 					IsConnected = true;
