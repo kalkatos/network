@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿#if UNITY_2018_1_OR_NEWER
+
+using System;
 using System.Collections.Generic;
 using Kalkatos.Network.Model;
 using UnityEngine;
@@ -17,7 +18,6 @@ namespace Kalkatos.Network.Unity
 		private static string playerId;
 		private static string playerRegion = "Default";
 		private static string nickname;
-		private static bool canLeaveMatch = true;
 		private static string localTestToken;
 
 		private const string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
@@ -164,16 +164,6 @@ namespace Kalkatos.Network.Unity
 				{
 					onFailure?.Invoke((NetworkError)failure);
 				});
-
-			//MatchInfo matchInfo = networkClient.MatchInfo;
-			//if (matchInfo == null || string.IsNullOrEmpty(matchInfo.MatchId))
-			//	onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Match is not available yet." });
-			//else
-			//{
-			//	onSuccess?.Invoke(matchInfo);
-			//	OnGetMatch?.Invoke(matchInfo);
-			//}
-			canLeaveMatch = true;
 		}
 
 		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
@@ -321,13 +311,7 @@ namespace Kalkatos.Network.Unity
 			if (IsConnected)
 				networkClient.SetNickname(nick);
 		}
-
-		private static IEnumerator WaitUntilMatchGotToLeave (Action callback)
-		{
-			Logger.Log($"[{nameof(NetworkClient)}] LeaveMatch: Waiting GetMatch to be called at least once before being able to leave match.");
-			while (!canLeaveMatch)
-				yield return null;
-			callback?.Invoke();
-		}
 	}
 }
+
+#endif

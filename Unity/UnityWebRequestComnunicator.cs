@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if UNITY_2018_1_OR_NEWER
+
+using System;
 using System.Collections;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,3 +58,5 @@ namespace Kalkatos.Network.Unity
 		}
 	}
 }
+
+#endif
