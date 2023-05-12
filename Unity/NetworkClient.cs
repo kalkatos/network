@@ -24,6 +24,8 @@ namespace Kalkatos.Network.Unity
 		private const string consonantsLower = "bcdfghjklmnpqrstvwxz";
 		private const string vowels = "aeiouy";
 
+		private string nicknameKey = "Nickname";
+
 		public static bool IsConnected => networkClient.IsConnected;
 		public static PlayerInfo MyInfo => networkClient.MyInfo;
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
@@ -43,9 +45,9 @@ namespace Kalkatos.Network.Unity
 			//networkClient = new AzureFunctionsNetworkClient(new HttpClientCommunicator());
 			DontDestroyOnLoad(this);
 #if UNITY_EDITOR
-			Storage.SetFileName($"{GetDeviceIdentifier()}.json");
+			nicknameKey += $"-{GetLocalDebugToken()}";
 #endif
-			nickname = Storage.Load("Nickname", "");
+			nickname = Storage.Load(nicknameKey, "");
 			if (string.IsNullOrEmpty(nickname))
 			{
 				nickname = "Guest-" + RandomName(6);
@@ -273,6 +275,14 @@ namespace Kalkatos.Network.Unity
 				Storage.Save("LocalUniqueIdentifier", deviceId);
 			}
 #if UNITY_EDITOR
+			return $"{deviceId}-{GetLocalDebugToken()}";
+#else
+			return deviceId;
+#endif
+		}
+
+		private static string GetLocalDebugToken ()
+		{
 			// Local test token
 			localTestToken = "editor";
 #if PARREL_SYNC
@@ -280,9 +290,7 @@ namespace Kalkatos.Network.Unity
 			if (!string.IsNullOrEmpty(cloneSuffix))
 				localTestToken = cloneSuffix;
 #endif
-			deviceId += $"-{localTestToken}";
-#endif
-			return deviceId;
+			return localTestToken;
 		}
 
 		private static string RandomName (int length)
@@ -303,7 +311,7 @@ namespace Kalkatos.Network.Unity
 		private static void SaveNicknameLocally (string nick)
 		{
 			nickname = nick;
-			Storage.Save("Nickname", nick);
+			Storage.Save(instance.nicknameKey, nick);
 		}
 
 		private static void SendNicknameToServer (string nick)
