@@ -1,4 +1,7 @@
-﻿using System;
+﻿// (c) 2023 Alex Kalkatos
+// This code is licensed under MIT license (see LICENSE.txt for details)
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
@@ -6,6 +9,9 @@ using Newtonsoft.Json;
 
 namespace Kalkatos.Network
 {
+	/// <summary>
+	/// Network Client implementation using Azure Functions.
+	/// </summary>
 	public class AzureFunctionsNetworkClient : NetworkEventDispatcher, INetworkClient
 	{
 		private Dictionary<string, string> uris = new Dictionary<string, string>

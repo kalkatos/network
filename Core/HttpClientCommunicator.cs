@@ -1,9 +1,15 @@
-﻿using System;
+﻿// (c) 2023 Alex Kalkatos
+// This code is licensed under MIT license (see LICENSE.txt for details)
+
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Kalkatos.Network
 {
+	/// <summary>
+	/// Implementation of a communicator using HttpClient
+	/// </summary>
 	public class HttpClientCommunicator : ICommunicator
 	{
 		private HttpClient httpClient = new HttpClient();

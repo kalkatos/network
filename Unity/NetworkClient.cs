@@ -1,4 +1,7 @@
-﻿#if UNITY_2018_1_OR_NEWER
+﻿// (c) 2023 Alex Kalkatos
+// This code is licensed under MIT license (see LICENSE.txt for details)
+
+#if UNITY_2018_1_OR_NEWER
 
 using System;
 using System.Collections.Generic;
@@ -8,7 +11,9 @@ using Random = UnityEngine.Random;
 
 namespace Kalkatos.Network.Unity
 {
-
+	/// <summary>
+	/// Unity MonoBehaviour wrapper to invoke INetworkClient methods.
+	/// </summary>
 	public class NetworkClient : MonoBehaviour
 	{
 		[SerializeField] private string gameId;
@@ -285,7 +290,7 @@ namespace Kalkatos.Network.Unity
 		{
 			// Local test token
 			localTestToken = "editor";
-#if PARREL_SYNC
+#if PARREL_SYNC && UNITY_EDITOR
 			string cloneSuffix = ParrelSync.ClonesManager.GetArgument();
 			if (!string.IsNullOrEmpty(cloneSuffix))
 				localTestToken = cloneSuffix;

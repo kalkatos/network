@@ -1,8 +1,14 @@
-﻿using System;
+﻿// (c) 2023 Alex Kalkatos
+// This code is licensed under MIT license (see LICENSE.txt for details)
+
+using System;
 using Kalkatos.Network.Model;
 
 namespace Kalkatos.Network
 {
+	/// <summary>
+	/// Base interface for sending and receiving data from a server.
+	/// </summary>
 	public interface INetworkClient
 	{
 		bool IsConnected { get; }
