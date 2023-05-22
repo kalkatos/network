@@ -1,4 +1,7 @@
-﻿namespace Kalkatos.Network
+﻿// (c) 2023 Alex Kalkatos
+// This code is licensed under MIT license (see LICENSE.txt for details)
+
+namespace Kalkatos.Network
 {
 	public enum NetworkEventKey : byte
 	{

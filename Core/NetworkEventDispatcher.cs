@@ -1,8 +1,14 @@
-﻿using System;
+﻿// (c) 2023 Alex Kalkatos
+// This code is licensed under MIT license (see LICENSE.txt for details)
+
+using System;
 using System.Collections.Generic;
 
 namespace Kalkatos.Network
 {
+	/// <summary>
+	/// Astract class that provides functionality for raising events based on a byte key.
+	/// </summary>
 	public abstract class NetworkEventDispatcher
 	{
 		protected Dictionary<byte, List<Action<object>>> eventCallbacks = new Dictionary<byte, List<Action<object>>>();
@@ -24,7 +30,7 @@ namespace Kalkatos.Network
 				eventCallbacks[key].Remove(callback);
 		}
 
-		protected void FireEvent (byte key, object param)
+		protected void RaiseEvent (byte key, object param)
 		{
 			if (eventCallbacks.ContainsKey(key))
 				foreach (var item in eventCallbacks[key])

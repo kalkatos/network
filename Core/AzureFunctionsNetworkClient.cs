@@ -16,16 +16,16 @@ namespace Kalkatos.Network
 	{
 		private Dictionary<string, string> uris = new Dictionary<string, string>
 		{
-			{ "SetPlayerData", "http://localhost:7089/api/SetPlayerData" },
-			{ "LogIn", "http://localhost:7089/api/LogIn" },
-			{ "FindMatch", "http://localhost:7089/api/FindMatch" },
-			{ "GetMatch", "http://localhost:7089/api/GetMatch" },
-			{ "LeaveMatch", "http://localhost:7089/api/LeaveMatch" },
-			{ "SendAction", "http://localhost:7089/api/SendAction" },
-			{ "GetMatchState", "http://localhost:7089/api/GetMatchState" },
-			{ "GetGameSettings", "http://localhost:7089/api/GetGameSettings" }
+			{ "SetPlayerData", "SetPlayerData" },
+			{ "LogIn", "LogIn" },
+			{ "FindMatch", "FindMatch" },
+			{ "GetMatch", "GetMatch" },
+			{ "LeaveMatch", "LeaveMatch" },
+			{ "SendAction", "SendAction" },
+			{ "GetMatchState", "GetMatchState" },
+			{ "GetGameSettings", "GetGameSettings" }
 		};
-		private bool loadUris = true;
+		private string functionsPrefix = "http://localhost:7089/api/";
 		private ICommunicator communicator;
 
 		public AzureFunctionsNetworkClient (ICommunicator communicator)
@@ -62,9 +62,7 @@ namespace Kalkatos.Network
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
 				return;
 			}
-			string urisSerialized = Storage.Load("Uris", "");
-			if (loadUris && !string.IsNullOrEmpty(urisSerialized))
-				uris = JsonConvert.DeserializeObject<Dictionary<string, string>>(urisSerialized);
+			functionsPrefix = Storage.Load("UrlPrefix", functionsPrefix);
 
 			_ = ConnectAsync((LoginRequest)parameter, onSuccess, onFailure);
 		}
@@ -100,7 +98,7 @@ namespace Kalkatos.Network
 				Data = changedData
 			};
 			communicator.Post(uris["SetPlayerData"], JsonConvert.SerializeObject(request), null);
-			FireEvent((byte)NetworkEventKey.SetPlayerData, changedData);
+			RaiseEvent((byte)NetworkEventKey.SetPlayerData, changedData);
 		}
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -203,7 +201,7 @@ namespace Kalkatos.Network
 		private async Task<string> Post (string uriTag, string content)
 		{
 			TaskCompletionSource<string> taskAwaiter = new TaskCompletionSource<string>();
-			communicator.Post(uris[uriTag], content, response => taskAwaiter.TrySetResult(response));
+			communicator.Post(functionsPrefix + uris[uriTag], content, response => taskAwaiter.TrySetResult(response));
 			return await taskAwaiter.Task;
 		}
 
@@ -222,18 +220,26 @@ namespace Kalkatos.Network
 				}
 				else
 				{
-					//string configResult = await Post("GetGameSettings", JsonConvert.SerializeObject(new GameDataRequest
-					//{
-					//	GameId = connectInfo.GameId,
-					//	PlayerId = loginResponse.PlayerId
-					//}));
-
+					string configResult = await Post("GetGameSettings", JsonConvert.SerializeObject(new GameDataRequest
+					{
+						GameId = connectInfo.GameId,
+						PlayerId = loginResponse.PlayerId
+					}));
+					GameDataResponse gameDataResponse = JsonConvert.DeserializeObject<GameDataResponse>(configResult);
+					if (gameDataResponse?.Settings != null)
+					{
+						foreach (var item in gameDataResponse.Settings)
+							if (uris.ContainsKey(item.Key))
+								uris[item.Key] = gameDataResponse.Settings[item.Key];
+					}
+					else
+						Logger.Log("Error getting game settings from server.");
 
 					IsConnected = true;
 					MyId = loginResponse.PlayerId;
 					MyInfo = loginResponse.MyInfo;
 					onSuccess?.Invoke(loginResponse);
-					FireEvent((byte)NetworkEventKey.Connect, loginResponse);
+					RaiseEvent((byte)NetworkEventKey.Connect, loginResponse);
 				}
 			}
 			catch (Exception e)
@@ -258,7 +264,7 @@ namespace Kalkatos.Network
 				else
 				{
 					onSuccess?.Invoke(null);
-					FireEvent((byte)NetworkEventKey.FindMatch, null);
+					RaiseEvent((byte)NetworkEventKey.FindMatch, null);
 				}
 			}
 			catch (Exception e)
@@ -292,7 +298,7 @@ namespace Kalkatos.Network
 					}
 					MatchInfo = new MatchInfo { MatchId = matchResponse.MatchId, Players = matchResponse.Players };
 					onSuccess?.Invoke(MatchInfo);
-					FireEvent((byte)NetworkEventKey.GetMatch, MatchInfo);
+					RaiseEvent((byte)NetworkEventKey.GetMatch, MatchInfo);
 				}
 			}
 			catch (Exception e)
@@ -320,7 +326,7 @@ namespace Kalkatos.Network
 					string matchId = MatchInfo?.MatchId ?? "<unknown>";
 					Logger.Log($"Left match {matchId}, Message = {leaveMatchResponse.Message}");
 					onSuccess?.Invoke(leaveMatchResponse);
-					FireEvent((byte)NetworkEventKey.LeaveMatch, leaveMatchResponse);
+					RaiseEvent((byte)NetworkEventKey.LeaveMatch, leaveMatchResponse);
 				}
 			}
 			catch (Exception e)
@@ -346,7 +352,7 @@ namespace Kalkatos.Network
 				{
 					StateInfo = actionResponse.AlteredState;
 					onSuccess?.Invoke(StateInfo);
-					FireEvent((byte)NetworkEventKey.SendAction, StateInfo);
+					RaiseEvent((byte)NetworkEventKey.SendAction, StateInfo);
 				}
 			}
 			catch (Exception e)
@@ -372,7 +378,7 @@ namespace Kalkatos.Network
 				{
 					StateInfo = stateResponse.StateInfo;
 					onSuccess?.Invoke(StateInfo);
-					FireEvent((byte)NetworkEventKey.GetMatchState, StateInfo);
+					RaiseEvent((byte)NetworkEventKey.GetMatchState, StateInfo);
 					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Got match state === {JsonConvert.SerializeObject(StateInfo)}");
 				}
 			}
