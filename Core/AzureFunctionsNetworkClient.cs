@@ -228,7 +228,7 @@ namespace Kalkatos.Network
 						PlayerId = loginResponse.PlayerId
 					}));
 					GameDataResponse gameDataResponse = JsonConvert.DeserializeObject<GameDataResponse>(configResult);
-					if (gameDataResponse?.Settings != null)
+					if (gameDataResponse?.Settings != null && !runLocally)
 					{
 						foreach (var item in gameDataResponse.Settings)
 							if (uris.ContainsKey(item.Key))
