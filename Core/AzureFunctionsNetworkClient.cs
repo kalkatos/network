@@ -27,6 +27,7 @@ namespace Kalkatos.Network
 		};
 		private string functionsPrefix = "http://localhost:7089/api/";
 		private ICommunicator communicator;
+		private bool runLocally = false;
 
 		public AzureFunctionsNetworkClient (ICommunicator communicator)
 		{
@@ -62,7 +63,8 @@ namespace Kalkatos.Network
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
 				return;
 			}
-			functionsPrefix = Storage.Load("UrlPrefix", functionsPrefix);
+			if (!runLocally)
+				functionsPrefix = Storage.Load("UrlPrefix", functionsPrefix);
 
 			_ = ConnectAsync((LoginRequest)parameter, onSuccess, onFailure);
 		}
