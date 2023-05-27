@@ -25,9 +25,10 @@ namespace Kalkatos.Network
 			{ "GetMatchState", "GetMatchState" },
 			{ "GetGameSettings", "GetGameSettings" }
 		};
-		private string functionsPrefix = "http://localhost:7089/api/";
+		private string functionsPrefix = "https://myapp123.azurewebsites.net/api/";
+		private string localFunctionsPrefix = "http://localhost:7089/api/";
 		private ICommunicator communicator;
-		private bool runLocally = false;
+		private bool mustRunLocally = false;
 
 		public AzureFunctionsNetworkClient (ICommunicator communicator)
 		{
@@ -63,7 +64,9 @@ namespace Kalkatos.Network
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
 				return;
 			}
-			if (!runLocally)
+			if (mustRunLocally)
+				functionsPrefix = localFunctionsPrefix;
+			else
 				functionsPrefix = Storage.Load("UrlPrefix", functionsPrefix);
 
 			_ = ConnectAsync((LoginRequest)parameter, onSuccess, onFailure);
@@ -228,7 +231,7 @@ namespace Kalkatos.Network
 						PlayerId = loginResponse.PlayerId
 					}));
 					GameDataResponse gameDataResponse = JsonConvert.DeserializeObject<GameDataResponse>(configResult);
-					if (gameDataResponse?.Settings != null && !runLocally)
+					if (gameDataResponse?.Settings != null && !mustRunLocally)
 					{
 						foreach (var item in gameDataResponse.Settings)
 							if (uris.ContainsKey(item.Key))
@@ -389,19 +392,6 @@ namespace Kalkatos.Network
 				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(GetMatchState)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match state." });
 			}
-		}
-
-		// ████████████████████████████████████████████ S U B C L A S S E S ████████████████████████████████████████████
-
-		public class FunctionInfo
-		{
-			public string FunctionName;
-			public string Url;
-		}
-
-		public class Config
-		{
-			public FunctionInfo[] Functions;
 		}
 	}
 }
