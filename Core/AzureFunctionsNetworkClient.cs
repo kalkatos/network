@@ -102,7 +102,7 @@ namespace Kalkatos.Network
 				PlayerId = MyId,
 				Data = changedData
 			};
-			communicator.Post(uris["SetPlayerData"], JsonConvert.SerializeObject(request), null);
+			communicator.Post(functionsPrefix + uris["SetPlayerData"], JsonConvert.SerializeObject(request), null);
 			RaiseEvent((byte)NetworkEventKey.SetPlayerData, changedData);
 		}
 
