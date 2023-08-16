@@ -68,9 +68,10 @@ namespace Kalkatos.Network.Unity
 			SendNicknameToServer(nick);
 		}
 
-		public static void SetPlayerData (Dictionary<string, string> data)
+		public static void SetPlayerData (Dictionary<string, string> data, Action<PlayerInfo> onSuccess, Action<Response> onFailure)
 		{
-			networkClient.SetPlayerData(data, null, null);
+
+			networkClient.SetPlayerData(data, (success) => onSuccess?.Invoke((PlayerInfo)success), (failure) => onFailure?.Invoke((Response)failure));
 		}
 
 		/// <summary>

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
+using UnityEditor.MemoryProfiler;
 
 namespace Kalkatos.Network
 {
@@ -28,7 +29,7 @@ namespace Kalkatos.Network
 		private string functionsPrefix = "https://myapp123.azurewebsites.net/api/";
 		private string localFunctionsPrefix = "http://localhost:7089/api/";
 		private ICommunicator communicator;
-		private bool mustRunLocally = false;
+		private bool mustRunLocally = true;
 
 		public AzureFunctionsNetworkClient (ICommunicator communicator)
 		{
@@ -102,8 +103,8 @@ namespace Kalkatos.Network
 				PlayerId = MyId,
 				Data = changedData
 			};
-			communicator.Post(functionsPrefix + uris["SetPlayerData"], JsonConvert.SerializeObject(request), null);
-			RaiseEvent((byte)NetworkEventKey.SetPlayerData, changedData);
+			
+			_ = SetPlayerDataAsync(request, onSuccess, onFailure);
 		}
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
@@ -251,6 +252,33 @@ namespace Kalkatos.Network
 			{
 				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(Connect)}: {e}");
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = "Server internal error." });
+			}
+		}
+
+		private async Task SetPlayerDataAsync (SetPlayerDataRequest request, Action<object> onSuccess, Action<object> onFailure)
+		{
+			try
+			{
+				string result = await Post("SetPlayerData", JsonConvert.SerializeObject(request));
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Result received: {result}");
+				PlayerInfoResponse playerInfoResponse = JsonConvert.DeserializeObject<PlayerInfoResponse>(result);
+				if (playerInfoResponse == null || playerInfoResponse.IsError)
+				{
+					string message = playerInfoResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SetPlayerData)}: {message}");
+					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = message });
+				}
+				else
+				{
+					MyInfo = playerInfoResponse.PlayerInfo;
+					onSuccess?.Invoke(MyInfo);
+					RaiseEvent((byte)NetworkEventKey.SetPlayerData, playerInfoResponse);
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.Log($"[{nameof(AzureFunctionsNetworkClient)}] Error in {nameof(SetPlayerDataAsync)}: {e}");
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected to the internet." });
 			}
 		}
 
