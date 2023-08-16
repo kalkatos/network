@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
-using UnityEditor.MemoryProfiler;
 
 namespace Kalkatos.Network
 {
