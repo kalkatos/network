@@ -28,7 +28,7 @@ namespace Kalkatos.Network
 		private string functionsPrefix = "https://myapp123.azurewebsites.net/api/";
 		private string localFunctionsPrefix = "http://localhost:7089/api/";
 		private ICommunicator communicator;
-		private bool mustRunLocally = true;
+		private bool mustRunLocally = false;
 
 		public AzureFunctionsNetworkClient (ICommunicator communicator)
 		{
