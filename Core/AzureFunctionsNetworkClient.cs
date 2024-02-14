@@ -64,6 +64,7 @@ namespace Kalkatos.Network
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is not of the expected type." });
 				return;
 			}
+			Injection.Bind<INetworkClient>(this);
 			if (mustRunLocally)
 				functionsPrefix = localFunctionsPrefix;
 			else
