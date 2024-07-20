@@ -20,6 +20,7 @@ namespace Kalkatos.Network.Unity
 
 		private static NetworkClient instance;
 		private static INetworkClient networkClient;
+		private static IAsyncClient asyncClient;
 		private static string playerId;
 		private static string playerRegion = "Default";
 		private static string nickname;
@@ -53,8 +54,9 @@ namespace Kalkatos.Network.Unity
 			}
 
 			networkClient = new AzureFunctionsNetworkClient(new UnityWebRequestComnunicator(this));
-			//networkClient = new AzureFunctionsNetworkClient(new HttpClientCommunicator());
-			DontDestroyOnLoad(this);
+			asyncClient = networkClient as IAsyncClient;
+            //networkClient = new AzureFunctionsNetworkClient(new HttpClientCommunicator());
+            DontDestroyOnLoad(this);
 #if UNITY_EDITOR
 			nicknameKey += $"-{GetLocalDebugToken()}";
 #endif
@@ -274,6 +276,78 @@ namespace Kalkatos.Network.Unity
 					onFailure?.Invoke((NetworkError)failure);
 				});
 		}
+
+		public static void AddAsyncObject (string region, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
+        {
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+                return;
+            }
+            if (string.IsNullOrEmpty(playerId))
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+                return;
+            }
+			if (info == null)
+			{
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+                return;
+            }
+			info.Author = nickname;
+
+			AddAsyncObjectRequest request = new AddAsyncObjectRequest
+			{
+				Region = region,
+				PlayerId = playerId,
+				Info = info
+			};
+			asyncClient.AddAsyncObject(request,
+				(success) =>
+				{
+					onSuccess?.Invoke((string)success);
+				},
+				(failure) =>
+				{
+                    onFailure?.Invoke((NetworkError)failure);
+                });
+        }
+
+		public static void GetAsyncObjects (string region, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
+		{
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+                return;
+            }
+            if (string.IsNullOrEmpty(playerId))
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+                return;
+            }
+            if (string.IsNullOrEmpty(region))
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+                return;
+            }
+
+			AsyncObjectRequest request = new AsyncObjectRequest
+			{
+				Region = region,
+				Quantity = quantity,
+				Id = id
+			};
+			asyncClient.GetAsyncObjects(request,
+				(success) =>
+				{
+					AsyncObjectInfo[] objs = (AsyncObjectInfo[])success;
+					onSuccess?.Invoke(objs);
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+        }
 
         // ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 

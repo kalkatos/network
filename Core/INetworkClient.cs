@@ -2,6 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 
 using System;
+using System.Collections;
 using Kalkatos.Network.Model;
 
 namespace Kalkatos.Network
@@ -26,7 +27,11 @@ namespace Kalkatos.Network
 		void SetPlayerData (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void SendAction (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void GetMatchState (object parameter, Action<object> onSuccess, Action<object> onFailure);
-		void Get (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
-		void Post (byte key, object parameter, Action<object> onSuccess, Action<object> onFailure);
+	}
+
+	public interface IAsyncClient
+	{
+		void AddAsyncObject (object parameter, Action<object> onSuccess, Action<object> onFailure);
+        void GetAsyncObjects (object parameter, Action<object> onSuccess, Action<object> onFailure);
 	}
 }
