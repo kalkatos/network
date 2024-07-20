@@ -36,6 +36,12 @@ namespace Kalkatos.Network.Unity
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
 		public static StateInfo StateInfo => networkClient.StateInfo;
 
+        [RuntimeInitializeOnLoadMethod]
+        public static void DoRuntimeStartRoutines ()
+        {
+            LoadUrlPrefix();
+        }
+
 		private void Awake ()
 		{
 			if (instance == null)
@@ -269,9 +275,25 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
+        // ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
-		private static string GetDeviceIdentifier ()
+        private static void LoadUrlPrefix ()
+        {
+            TextAsset configAsset = (TextAsset)Resources.Load("urlprefix");
+            if (configAsset == null)
+            {
+                Logger.LogWarning("UrlPrefix asset not found.");
+                return;
+            }
+            if (string.IsNullOrEmpty(configAsset.text))
+            {
+                Logger.LogWarning("UrlPrefix asset text is empty.");
+                return;
+            }
+            Storage.Save("UrlPrefix", configAsset.text);
+        }
+
+        private static string GetDeviceIdentifier ()
 		{
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
 			if (deviceId == SystemInfo.unsupportedIdentifier)
