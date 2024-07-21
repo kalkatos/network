@@ -56,7 +56,7 @@ namespace Kalkatos.Network
 		/// <param screenName="onFailure">A <typeparamref screenName="NetworkError"/> with the reason it did not connect.</param>
 		public void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<LoginRequest>(parameter, out string message))
+            if (!CheckParameter<LoginRequest>(parameter, out string message, true))
             {
                 onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
                 return;
@@ -179,9 +179,9 @@ namespace Kalkatos.Network
 
 		/// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
-		private bool CheckParameter<T>(object parameter, out string message)
+		private bool CheckParameter<T>(object parameter, out string message, bool skipConnected = false)
 		{
-            if (!IsConnected)
+            if (!IsConnected && !skipConnected)
             {
 				message = "Not connected.";
                 Logger.LogError(message);
@@ -448,7 +448,7 @@ namespace Kalkatos.Network
         {
             try
             {
-                string result = await Post("AddAsyncObject", JsonConvert.SerializeObject(request));
+                string result = await Post("GetAsyncObjects", JsonConvert.SerializeObject(request));
                 AsyncObjectResponse response = JsonConvert.DeserializeObject<AsyncObjectResponse>(result);
                 if (response == null || response.IsError)
                 {
