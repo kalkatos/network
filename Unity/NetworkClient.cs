@@ -369,22 +369,30 @@ namespace Kalkatos.Network.Unity
 
         private static string GetDeviceIdentifier ()
 		{
+#if UNITY_WEBGL
+			string deviceId = GetLocalIdentifier();
+#else
 			string deviceId = SystemInfo.deviceUniqueIdentifier;
 			if (deviceId == SystemInfo.unsupportedIdentifier)
-			{
-				Logger.Log("Getting a local unique identifier");
-				deviceId = Storage.Load("LocalUniqueIdentifier", "");
-				if (string.IsNullOrEmpty(deviceId))
-				{
-					deviceId = Guid.NewGuid().ToString();
-					Storage.Save("LocalUniqueIdentifier", deviceId);
-				}
-			}
+				deviceId = GetLocalIdentifier();
+#endif
 #if UNITY_EDITOR
 			return $"{deviceId}-{GetLocalDebugToken()}";
 #else
 			return deviceId;
 #endif
+
+			string GetLocalIdentifier ()
+			{
+                Logger.Log("Getting a local unique identifier");
+                string result = Storage.Load("LocalUniqueIdentifier", "");
+                if (string.IsNullOrEmpty(result))
+                {
+                    result = Guid.NewGuid().ToString();
+                    Storage.Save("LocalUniqueIdentifier", result);
+                }
+				return result;
+            }
 		}
 
 		private static string GetLocalDebugToken ()
