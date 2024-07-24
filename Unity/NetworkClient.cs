@@ -373,8 +373,12 @@ namespace Kalkatos.Network.Unity
 			if (deviceId == SystemInfo.unsupportedIdentifier)
 			{
 				Logger.Log("Getting a local unique identifier");
-				deviceId = Storage.Load("LocalUniqueIdentifier", Guid.NewGuid().ToString());
-				Storage.Save("LocalUniqueIdentifier", deviceId);
+				deviceId = Storage.Load("LocalUniqueIdentifier", "");
+				if (string.IsNullOrEmpty(deviceId))
+				{
+					deviceId = Guid.NewGuid().ToString();
+					Storage.Save("LocalUniqueIdentifier", deviceId);
+				}
 			}
 #if UNITY_EDITOR
 			return $"{deviceId}-{GetLocalDebugToken()}";
