@@ -37,7 +37,7 @@ namespace Kalkatos.Network.Unity
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
 		public static StateInfo StateInfo => networkClient.StateInfo;
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void DoRuntimeStartRoutines ()
         {
             LoadUrlPrefix();
