@@ -277,7 +277,7 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void AddAsyncObject (string region, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
+		public static void AddAsyncObject (string type, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
         {
             if (Application.internetReachability == NetworkReachability.NotReachable)
             {
@@ -298,7 +298,7 @@ namespace Kalkatos.Network.Unity
 
 			AddAsyncObjectRequest request = new AddAsyncObjectRequest
 			{
-				Region = region,
+				Type = type,
 				PlayerId = playerId,
 				Info = info
 			};
@@ -313,7 +313,7 @@ namespace Kalkatos.Network.Unity
                 });
         }
 
-		public static void GetAsyncObjects (string region, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
+		public static void GetAsyncObjects (string type, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
 		{
             if (Application.internetReachability == NetworkReachability.NotReachable)
             {
@@ -325,7 +325,7 @@ namespace Kalkatos.Network.Unity
                 onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
                 return;
             }
-            if (string.IsNullOrEmpty(region))
+            if (string.IsNullOrEmpty(type))
             {
                 onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
                 return;
@@ -333,7 +333,7 @@ namespace Kalkatos.Network.Unity
 
 			AsyncObjectRequest request = new AsyncObjectRequest
 			{
-				Region = region,
+				Type = type,
 				Quantity = quantity,
 				Id = id
 			};
