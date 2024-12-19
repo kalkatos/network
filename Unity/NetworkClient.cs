@@ -16,7 +16,12 @@ namespace Kalkatos.Network.Unity
 	/// </summary>
 	public class NetworkClient : MonoBehaviour
 	{
-		[SerializeField] private string gameId;
+		[SerializeField] private string gameName;
+		[SerializeField] private bool useLobby;
+		[SerializeField] private bool useLocal;
+		[SerializeField] private NetworkUrlSettings urlSettings_Local;
+		[SerializeField] private NetworkUrlSettings urlSettings_Remote;
+		[SerializeField] private CustomMatchmakingData[] customData;
 
 		private static NetworkClient instance;
 		private static INetworkClient networkClient;
@@ -37,11 +42,7 @@ namespace Kalkatos.Network.Unity
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
 		public static StateInfo StateInfo => networkClient.StateInfo;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void DoRuntimeStartRoutines ()
-        {
-            LoadUrlPrefix();
-        }
+		public static Dictionary<string, string> GameSettings => networkClient.GameSettings;
 
 		private void Awake ()
 		{
@@ -52,11 +53,15 @@ namespace Kalkatos.Network.Unity
 				Destroy(this);
 				return;
 			}
-
-			networkClient = new AzureFunctionsNetworkClient(new UnityWebRequestComnunicator(this));
+			
+			var urls = urlSettings_Remote;
+#if UNITY_EDITOR
+			if (useLocal)
+				urls = urlSettings_Local;
+#endif
+			networkClient = new HttpFunctionsNetworkClient(new UnityWebRequestComnunicator(this), urls.GetUrls());
 			asyncClient = networkClient as IAsyncClient;
-            //networkClient = new AzureFunctionsNetworkClient(new HttpClientCommunicator());
-            DontDestroyOnLoad(this);
+			DontDestroyOnLoad(this);
 #if UNITY_EDITOR
 			nicknameKey += $"-{GetLocalDebugToken()}";
 #endif
@@ -78,7 +83,6 @@ namespace Kalkatos.Network.Unity
 
 		public static void SetPlayerData (Dictionary<string, string> data, Action<PlayerInfo> onSuccess, Action<Response> onFailure)
 		{
-
 			networkClient.SetPlayerData(data, (success) => onSuccess?.Invoke((PlayerInfo)success), (failure) => onFailure?.Invoke((Response)failure));
 		}
 
@@ -99,7 +103,7 @@ namespace Kalkatos.Network.Unity
 			}
 
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameId, Nickname = nickname, Region = playerRegion },
+			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameName, Nickname = nickname, Region = playerRegion },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
@@ -117,7 +121,7 @@ namespace Kalkatos.Network.Unity
 		/// <summary>
 		/// Tries to find a match.
 		/// </summary>
-		/// <param screenName="onSuccess"> String with the matchmaking ticket. </param>
+		/// <param screenName="onSuccess"> String with the word "Success". Poll with 'GetMatch' to retrieve information on the match whenever it is ready. </param>
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
@@ -132,12 +136,23 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
+			Dictionary<string, string> customMatchmakingData = null;
+			if (instance.customData != null && instance.customData.Length > 0)
+			{
+				customMatchmakingData = new();
+				foreach (var item in instance.customData)
+				{
+					customMatchmakingData.Add(item.Key, item.Value);
+				}
+			}
 			networkClient.FindMatch(
 				new FindMatchRequest
 				{
-					GameId = instance.gameId,
+					GameId = instance.gameName,
 					PlayerId = playerId,
-					Region = playerRegion
+					Region = playerRegion,
+					UseLobby = instance.useLobby,
+					CustomData = customMatchmakingData
 				},
 				(success) =>
 				{
@@ -149,7 +164,12 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void GetMatch (Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
+		/// <summary>
+		/// Poll to get info on a match if a FindMatch was called before. Or get info on current active match.
+		/// </summary>
+		/// <param name="onSuccess"> <typeparamref screenName="MatchInfo"/> object with info on the match. </param>
+		/// <param name="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
+		public static void GetMatch (string alias, Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -168,8 +188,9 @@ namespace Kalkatos.Network.Unity
 				{
 					PlayerId = playerId,
 					MatchId = networkClient.MatchInfo?.MatchId,
-					GameId = instance.gameId,
-					Region = playerRegion
+					GameId = instance.gameName,
+					Region = playerRegion,
+					Alias = alias
 				},
 				(success) =>
 				{
@@ -182,6 +203,11 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
+		/// <summary>
+		/// Leaves current match, or stops looking for a match if not matched yet.
+		/// </summary>
+		/// <param name="onSuccess"></param>
+		/// <param name="onFailure"></param>
 		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
@@ -198,7 +224,7 @@ namespace Kalkatos.Network.Unity
 			networkClient.LeaveMatch(
 				new MatchRequest 
 				{ 
-					GameId = instance.gameId, 
+					GameId = instance.gameName, 
 					Region = playerRegion,
 					PlayerId = playerId,
 					MatchId = networkClient.MatchInfo?.MatchId ?? ""
@@ -213,7 +239,13 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void SendAction (ActionInfo action, Action<StateInfo> onSuccess, Action<NetworkError> onFailure)
+		/// <summary>
+		/// Sends an action performed by the player. The action will be validated by the backend service.
+		/// </summary>
+		/// <param name="action"></param>
+		/// <param name="onSuccess"></param>
+		/// <param name="onFailure"></param>
+		public static void SendAction (ActionInfo action, Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -229,14 +261,13 @@ namespace Kalkatos.Network.Unity
 			ActionRequest request = new ActionRequest
 			{
 				PlayerId = playerId,
-				MatchId = MatchInfo.MatchId,
+				MatchId = MatchInfo?.MatchId,
 				Action = action
 			};
 			networkClient.SendAction(request,
 				(success) =>
 				{
-					StateInfo state = (StateInfo)success;
-					onSuccess?.Invoke(state);
+					onSuccess?.Invoke("Success");
 				},
 				(failure) =>
 				{
@@ -244,6 +275,11 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
+		/// <summary>
+		/// Get state on the current match. The info presented in StateInfo depends on the rules defined by the backend code.
+		/// </summary>
+		/// <param name="onSuccess"></param>
+		/// <param name="onFailure"></param>
 		public static void GetMatchState (Action<StateInfo> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
@@ -262,7 +298,7 @@ namespace Kalkatos.Network.Unity
 			StateRequest request = new StateRequest
 			{
 				PlayerId = playerId,
-				MatchId = MatchInfo.MatchId,
+				MatchId = MatchInfo?.MatchId,
 				LastHash = lastHash
 			};
 			networkClient.GetMatchState(request,
@@ -278,22 +314,22 @@ namespace Kalkatos.Network.Unity
 		}
 
 		public static void AddAsyncObject (string type, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
-        {
-            if (Application.internetReachability == NetworkReachability.NotReachable)
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
-                return;
-            }
-            if (string.IsNullOrEmpty(playerId))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
-                return;
-            }
+		{
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
 			if (info == null)
 			{
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
-                return;
-            }
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+				return;
+			}
 			info.Author = nickname;
 
 			AddAsyncObjectRequest request = new AddAsyncObjectRequest
@@ -309,27 +345,27 @@ namespace Kalkatos.Network.Unity
 				},
 				(failure) =>
 				{
-                    onFailure?.Invoke((NetworkError)failure);
-                });
-        }
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
 
 		public static void GetAsyncObjects (string type, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
 		{
-            if (Application.internetReachability == NetworkReachability.NotReachable)
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
-                return;
-            }
-            if (string.IsNullOrEmpty(playerId))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
-                return;
-            }
-            if (string.IsNullOrEmpty(type))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
-                return;
-            }
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
+			if (string.IsNullOrEmpty(type))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+				return;
+			}
 
 			AsyncObjectRequest request = new AsyncObjectRequest
 			{
@@ -347,27 +383,11 @@ namespace Kalkatos.Network.Unity
 				{
 					onFailure?.Invoke((NetworkError)failure);
 				});
-        }
+		}
 
-        // ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
+		// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
-        private static void LoadUrlPrefix ()
-        {
-            TextAsset configAsset = (TextAsset)Resources.Load("urlprefix");
-            if (configAsset == null)
-            {
-                Logger.LogWarning("UrlPrefix asset not found.");
-                return;
-            }
-            if (string.IsNullOrEmpty(configAsset.text))
-            {
-                Logger.LogWarning("UrlPrefix asset text is empty.");
-                return;
-            }
-            Storage.Save("UrlPrefix", configAsset.text);
-        }
-
-        private static string GetDeviceIdentifier ()
+		private static string GetDeviceIdentifier ()
 		{
 #if UNITY_WEBGL
 			string deviceId = GetLocalIdentifier();
@@ -384,15 +404,15 @@ namespace Kalkatos.Network.Unity
 
 			string GetLocalIdentifier ()
 			{
-                Logger.Log("Getting a local unique identifier");
-                string result = Storage.Load("LocalUniqueIdentifier", "");
-                if (string.IsNullOrEmpty(result))
-                {
-                    result = Guid.NewGuid().ToString();
-                    Storage.Save("LocalUniqueIdentifier", result);
-                }
+				Logger.Log("Getting a local unique identifier");
+				string result = Storage.Load("LocalUniqueIdentifier", "");
+				if (string.IsNullOrEmpty(result))
+				{
+					result = Guid.NewGuid().ToString();
+					Storage.Save("LocalUniqueIdentifier", result);
+				}
 				return result;
-            }
+			}
 		}
 
 		private static string GetLocalDebugToken ()
@@ -433,6 +453,13 @@ namespace Kalkatos.Network.Unity
 			if (IsConnected)
 				networkClient.SetNickname(nick);
 		}
+	}
+
+	[System.Serializable]
+	public class CustomMatchmakingData
+	{
+		public string Key;
+		public string Value;
 	}
 }
 

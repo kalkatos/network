@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Kalkatos.Network.Model;
 
 namespace Kalkatos.Network
@@ -18,6 +19,7 @@ namespace Kalkatos.Network
 		PlayerInfo MyInfo { get; }
 		MatchInfo MatchInfo { get; }
 		StateInfo StateInfo { get; }
+		Dictionary<string, string> GameSettings { get; }
 
 		void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure);
@@ -32,6 +34,6 @@ namespace Kalkatos.Network
 	public interface IAsyncClient
 	{
 		void AddAsyncObject (object parameter, Action<object> onSuccess, Action<object> onFailure);
-        void GetAsyncObjects (object parameter, Action<object> onSuccess, Action<object> onFailure);
+		void GetAsyncObjects (object parameter, Action<object> onSuccess, Action<object> onFailure);
 	}
 }

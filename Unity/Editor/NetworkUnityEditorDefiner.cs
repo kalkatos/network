@@ -1,16 +1,16 @@
 ﻿// (c) 2023 Alex Kalkatos
 // This code is licensed under MIT license (see LICENSE.txt for details)
 
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_1_OR_NEWER && UNITY_EDITOR
 
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kalkatos.Network.Unity
+namespace Kalkatos.Network.Unity.Editor
 {
     [InitializeOnLoad]
-    public class NetworkUnityEditorDefiner : Editor
+    public class NetworkUnityEditorDefiner : UnityEditor.Editor
     {
         public static readonly string[] Symbols = new string[] { "KALKATOS_NETWORK" };
 
