@@ -6,6 +6,8 @@
 using System;
 using System.Collections.Generic;
 using Kalkatos.Network.Model;
+using Newtonsoft.Json;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -34,9 +36,12 @@ namespace Kalkatos.Network.Unity
 		private const string consonantsUpper = "BCDFGHJKLMNPQRSTVWXZ";
 		private const string consonantsLower = "bcdfghjklmnpqrstvwxz";
 		private const string vowels = "aeiouy";
+		private const string AUTH_INFO_KEY = "AuthInfo";
 
 		private string nicknameKey = "Nickname";
+		private UserInfo userInfo;
 
+		public static string MyId => playerId;
 		public static bool IsConnected => networkClient.IsConnected;
 		public static PlayerInfo MyInfo => networkClient.MyInfo;
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
@@ -93,8 +98,16 @@ namespace Kalkatos.Network.Unity
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
 		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
 		{
-			string deviceId = GetDeviceIdentifier();
-			Logger.Log("Connecting with identifier " + deviceId);
+			string identifier;
+			if (Storage.TryLoad(AUTH_INFO_KEY, "", out string info))
+			{
+				instance.userInfo = JsonConvert.DeserializeObject<UserInfo>(info);
+				identifier = instance.userInfo.Email;
+			}
+			else
+				identifier = GetDeviceIdentifier();
+
+			Logger.Log("Connecting with identifier " + identifier);
 
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -103,7 +116,7 @@ namespace Kalkatos.Network.Unity
 			}
 
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = deviceId, GameId = instance.gameName, Nickname = nickname, Region = playerRegion },
+			networkClient.Connect(new LoginRequest { Identifier = identifier, GameId = instance.gameName, Nickname = nickname, Region = playerRegion },
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
@@ -385,9 +398,7 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
-
-		private static string GetDeviceIdentifier ()
+		public static string GetDeviceIdentifier ()
 		{
 #if UNITY_WEBGL
 			string deviceId = GetLocalIdentifier();
@@ -414,6 +425,8 @@ namespace Kalkatos.Network.Unity
 				return result;
 			}
 		}
+
+		// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
 		private static string GetLocalDebugToken ()
 		{
@@ -452,6 +465,13 @@ namespace Kalkatos.Network.Unity
 		{
 			if (IsConnected)
 				networkClient.SetNickname(nick);
+		}
+
+		internal static void SetAuthentication (UserInfo userInfo)
+		{
+			instance.userInfo = userInfo;
+			if (userInfo != null)
+				Storage.Save(AUTH_INFO_KEY, JsonConvert.SerializeObject(userInfo));
 		}
 	}
 
