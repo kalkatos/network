@@ -56,13 +56,7 @@ namespace Kalkatos.Network
 			AuthDataResponse response = JsonConvert.DeserializeObject<AuthDataResponse>(responseStr);
 			if (response.Status == "Concluded")
 			{
-				UserInfo info = new UserInfo
-				{
-					Name = response.Name,
-					Email = response.Email,
-					Picture = response.Picture
-				};
-				onSuccess?.Invoke(info);
+				onSuccess?.Invoke(response.UserInfo);
                 return;
 			}
 			onFailure?.Invoke(response.Message);

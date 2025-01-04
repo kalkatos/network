@@ -92,7 +92,7 @@ namespace Kalkatos.Network.Unity
 					});
 				while (!hasReturned)
 					yield return null;
-				yield return new WaitForSeconds(UnityEngine.Random.Range(2.5f, 3.5f));
+				yield return new WaitForSeconds(Random.Range(2.5f, 3.5f));
 				attempt++;
 			} while (userInfo == null && attempt <= maxAttempts);
 			if (userInfo != null)
