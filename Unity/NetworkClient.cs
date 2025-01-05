@@ -99,13 +99,15 @@ namespace Kalkatos.Network.Unity
 		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
 		{
 			string identifier;
-			if (Storage.TryLoad(AUTH_INFO_KEY, "", out string info))
+			bool hasAuth = Storage.TryLoad(AUTH_INFO_KEY, "", out string info);
+			string deviceId = GetDeviceIdentifier();
+			if (hasAuth)
 			{
 				instance.userInfo = JsonConvert.DeserializeObject<UserInfo>(info);
 				identifier = instance.userInfo.Email;
 			}
 			else
-				identifier = GetDeviceIdentifier();
+				identifier = deviceId;
 
 			Logger.Log("Connecting with identifier " + identifier);
 
@@ -115,8 +117,19 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
+			LoginRequest request = new LoginRequest
+			{
+				Identifier = identifier,
+				DeviceId = deviceId,
+				GameId = instance.gameName,
+				Nickname = nickname,
+				Region = playerRegion
+			};
+			if (hasAuth)
+				request.IdToken = instance.userInfo.IdToken;
+
 			// Invoke network
-			networkClient.Connect(new LoginRequest { Identifier = identifier, GameId = instance.gameName, Nickname = nickname, Region = playerRegion },
+			networkClient.Connect(request,
 				(success) =>
 				{
 					LoginResponse response = (LoginResponse)success;
