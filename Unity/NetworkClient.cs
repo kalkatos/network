@@ -96,7 +96,7 @@ namespace Kalkatos.Network.Unity
 		/// </summary>
 		/// <param screenName="onSuccess"> True if it's new user </param>
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
-		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure)
+		public static void Connect (Action<bool> onSuccess, Action<NetworkError> onFailure, bool mustAuthenticate = false)
 		{
 			string identifier;
 			bool hasAuth = Storage.TryLoad(AUTH_INFO_KEY, "", out string info);
@@ -116,6 +116,8 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
 				return;
 			}
+
+			bool isAuthenticating = !hasAuth && mustAuthenticate;
 
 			LoginRequest request = new LoginRequest
 			{
