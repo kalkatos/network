@@ -122,11 +122,9 @@ namespace Kalkatos.Network.Unity
 				Identifier = identifier,
 				DeviceId = deviceId,
 				GameId = instance.gameName,
-				Nickname = nickname,
-				Region = playerRegion
-			};
-			if (hasAuth)
-				request.IdToken = instance.userInfo.IdToken;
+				Region = playerRegion,
+				MustAuthenticate = isAuthenticating
+            };
 
 			// Invoke network
 			networkClient.Connect(request,

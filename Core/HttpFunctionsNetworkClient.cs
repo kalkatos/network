@@ -318,15 +318,8 @@ namespace Kalkatos.Network
 				{
 					Logger.Log($"Got match = {JsonConvert.SerializeObject(matchResponse)}");
 					IsInRoom = true;
-					Players = matchResponse.Players;
-					MatchInfo = new MatchInfo
-					{
-						MatchId = matchResponse.MatchId,
-						Alias = matchResponse.Alias,
-						Players = matchResponse.Players,
-						IsStarted = matchResponse.IsStarted,
-						IsEnded = matchResponse.IsEnded
-					};
+					MatchInfo = matchResponse.MatchInfo;
+					Players = MatchInfo.Players;
 					onSuccess?.Invoke(MatchInfo);
 				}
 			}
