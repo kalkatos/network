@@ -29,6 +29,9 @@ namespace Kalkatos.Network
 		void SetPlayerData (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void SendAction (object parameter, Action<object> onSuccess, Action<object> onFailure);
 		void GetMatchState (object parameter, Action<object> onSuccess, Action<object> onFailure);
+		void GetData (string key, string defaultValue, Action<object> onSuccess, Action<object> onFailure);
+		void SetData (string key, string value, Action<object> onSuccess, Action<object> onFailure);
+		void GetBatchData (string query, Action<object> onSuccess, Action<object> onFailure);
 	}
 
 	public interface IAsyncClient

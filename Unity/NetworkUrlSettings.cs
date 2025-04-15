@@ -19,6 +19,9 @@ namespace Kalkatos.Network.Unity
 		public string SendActionUrl;		
 		public string GetMatchStateUrl;		
 		public string GetGameSettingsUrl;
+		public string GetDataUrl;
+		public string SetDataUrl;
+		public string GetBatchDataUrl;
 
 		public Dictionary<string, string> GetUrls ()
         {
@@ -32,6 +35,9 @@ namespace Kalkatos.Network.Unity
 				{ "SendAction", SendActionUrl },
 				{ "GetMatchState", GetMatchStateUrl },
 				{ "GetGameSettings", GetGameSettingsUrl },
+				{ "GetData", GetDataUrl },
+				{ "SetData", SetDataUrl },
+				{ "GetBatchData", GetBatchDataUrl },
 			};
 		}
     }

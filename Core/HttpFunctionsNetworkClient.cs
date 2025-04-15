@@ -24,6 +24,9 @@ namespace Kalkatos.Network
 			{ "SendAction", "SendAction" },
 			{ "GetMatchState", "GetMatchState" },
 			{ "GetGameSettings", "GetGameSettings" },
+			{ "GetData", "GetData" },
+			{ "SetData", "SetData" },
+			{ "GetBatchData", "GetBatchData" },
 		};
 		private ICommunicator communicator;
 
@@ -34,9 +37,9 @@ namespace Kalkatos.Network
 		}
 
 		public HttpFunctionsNetworkClient (ICommunicator communicator, Dictionary<string, string> urlDict) : this(communicator)
-        {
+		{
 			SetUrls(urlDict);
-        }
+		}
 
 		public string MyId { get; private set; }
 		public bool IsConnected { get; private set; }
@@ -50,14 +53,14 @@ namespace Kalkatos.Network
 		// ████████████████████████████████████████████ P U B L I C ████████████████████████████████████████████
 
 		public void SetUrls (Dictionary<string, string> urlDict)
-        {
-            foreach (var kv in urlDict)
-            {
+		{
+			foreach (var kv in urlDict)
+			{
 				string urlKey = kv.Key;
 				if (urls.ContainsKey(urlKey))
 					urls[urlKey] = kv.Value;
-            }
-        }
+			}
+		}
 
 		/// <summary>
 		/// 
@@ -67,13 +70,13 @@ namespace Kalkatos.Network
 		/// <param screenName="onFailure">A <typeparamref screenName="NetworkError"/> with the reason it did not connect.</param>
 		public void Connect (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<LoginRequest>(parameter, out string message, true))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
+			if (!CheckParameter<LoginRequest>(parameter, out string message, true))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
 
-            Injection.Bind<INetworkClient>(this);
+			Injection.Bind<INetworkClient>(this);
 
 			_ = ConnectAsync((LoginRequest)parameter, onSuccess, onFailure);
 		}
@@ -90,12 +93,12 @@ namespace Kalkatos.Network
 
 		public void SetPlayerData (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<Dictionary<string, string>>(parameter, out string message))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
-            
+			if (!CheckParameter<Dictionary<string, string>>(parameter, out string message))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
+			
 			var changedData = (Dictionary<string, string>)parameter;
 			SetPlayerDataRequest request = new SetPlayerDataRequest
 			{
@@ -108,82 +111,97 @@ namespace Kalkatos.Network
 
 		public void FindMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<FindMatchRequest>(parameter, out string message))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
+			if (!CheckParameter<FindMatchRequest>(parameter, out string message))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
 
-            _ = FindMatchAsync((FindMatchRequest)parameter, onSuccess, onFailure);
+			_ = FindMatchAsync((FindMatchRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void GetMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<MatchRequest>(parameter, out string message))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
+			if (!CheckParameter<MatchRequest>(parameter, out string message))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
 
-            _ = GetMatchAsync((MatchRequest)parameter, onSuccess, onFailure);
+			_ = GetMatchAsync((MatchRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void LeaveMatch (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<MatchRequest>(parameter, out string message))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
+			if (!CheckParameter<MatchRequest>(parameter, out string message))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
 
-            _ = LeaveMatchAsync((MatchRequest)parameter, onSuccess, onFailure);
+			_ = LeaveMatchAsync((MatchRequest)parameter, onSuccess, onFailure);
 		}
 
 		public void SendAction (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<ActionRequest>(parameter, out string message))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
+			if (!CheckParameter<ActionRequest>(parameter, out string message))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
 
-            _ = SendActionAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
+			_ = SendActionAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
 		}
 
 		public void GetMatchState (object parameter, Action<object> onSuccess, Action<object> onFailure)
 		{
-            if (!CheckParameter<StateRequest>(parameter, out string message))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
-                return;
-            }
+			if (!CheckParameter<StateRequest>(parameter, out string message))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = message });
+				return;
+			}
 
-            _ = GetMatchStateAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
+			_ = GetMatchStateAsync(JsonConvert.SerializeObject(parameter), onSuccess, onFailure);
+		}
+
+		public void GetData (string key, string defaultValue, Action<object> onSuccess, Action<object> onFailure)
+		{
+			_ = GetDataAsync(key, defaultValue, onSuccess, onFailure);
+		}
+
+		public void SetData (string key, string value, Action<object> onSuccess, Action<object> onFailure)
+		{
+			_ = SetDataAsync(key, value, onSuccess, onFailure);
+		}
+
+		public void GetBatchData (string query, Action<object> onSuccess, Action<object> onFailure)
+		{
+			_ = GetBatchDataAsync(query, onSuccess, onFailure);
 		}
 
 		/// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
 		private bool CheckParameter<T>(object parameter, out string message, bool skipConnected = false)
 		{
-            if (!IsConnected && !skipConnected)
-            {
+			if (!IsConnected && !skipConnected)
+			{
 				message = "Not connected.";
-                Logger.LogError(message);
-                return false;
-            }
-            if (parameter == null)
-            {
+				Logger.LogError(message);
+				return false;
+			}
+			if (parameter == null)
+			{
 				message = $"Parameter is null. It must be of type {typeof(T)}.";
-                return false;
-            }
-            if (!(parameter is T))
-            {
-                message = $"Parameter is not of the expected type ({typeof(T)}).";
-                return false;
-            }
+				return false;
+			}
+			if (!(parameter is T))
+			{
+				message = $"Parameter is not of the expected type ({typeof(T)}).";
+				return false;
+			}
 			message = "OK";
 			return true;
-        }
+		}
 
 		private async Task<string> Post (string uriTag, string content)
 		{
@@ -212,7 +230,10 @@ namespace Kalkatos.Network
 				{
 					string message = loginResponse?.Message ?? "Server internal error";
 					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(Connect)}: {message}");
-					onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = message });
+					if (message.Contains("Version"))
+						onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.OutdatedVersion, Message = message });
+					else
+						onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotAvailable, Message = message });
 				}
 				else
 				{
@@ -236,6 +257,7 @@ namespace Kalkatos.Network
 					MyId = loginResponse.PlayerId;
 					MyInfo = loginResponse.MyInfo;
 					onSuccess?.Invoke(loginResponse);
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Logged in with player: {JsonConvert.SerializeObject(MyInfo)}");
 				}
 			}
 			catch (Exception e)
@@ -284,11 +306,11 @@ namespace Kalkatos.Network
 					onFailure?.Invoke(new NetworkError { Message = message }); 
 				}
 				else
-                {
-                    ClearMatchData();
-                    onSuccess?.Invoke(null);
-                }
-            }
+				{
+					ClearMatchData();
+					onSuccess?.Invoke(null);
+				}
+			}
 			catch (Exception e)
 			{
 				Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(FindMatch)}: {e}");
@@ -296,7 +318,7 @@ namespace Kalkatos.Network
 			}
 		}
 
-        private async Task GetMatchAsync (MatchRequest request, Action<object> onSuccess, Action<object> onFailure)
+		private async Task GetMatchAsync (MatchRequest request, Action<object> onSuccess, Action<object> onFailure)
 		{
 			try
 			{
@@ -318,15 +340,8 @@ namespace Kalkatos.Network
 				{
 					Logger.Log($"Got match = {JsonConvert.SerializeObject(matchResponse)}");
 					IsInRoom = true;
-					Players = matchResponse.Players;
-					MatchInfo = new MatchInfo
-					{
-						MatchId = matchResponse.MatchId,
-						Alias = matchResponse.Alias,
-						Players = matchResponse.Players,
-						IsStarted = matchResponse.IsStarted,
-						IsEnded = matchResponse.IsEnded
-					};
+					MatchInfo = matchResponse.MatchInfo;
+					Players = MatchInfo.Players;
 					onSuccess?.Invoke(MatchInfo);
 				}
 			}
@@ -413,5 +428,97 @@ namespace Kalkatos.Network
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting match state." });
 			}
 		}
-    }
+
+		private async Task GetDataAsync (string key, string defaultValue, Action<object> onSuccess, Action<object> onFailure)
+		{
+			try
+			{
+				DataRequest request = new DataRequest
+				{
+					PlayerId = MyId,
+					Key = key,
+					DefaultValue = defaultValue
+				};
+				string result = await Post("GetData", JsonConvert.SerializeObject(request));
+				DataResponse dataResponse = JsonConvert.DeserializeObject<DataResponse>(result);
+				if (dataResponse == null || dataResponse.IsError)
+				{
+					string message = dataResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(GetData)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message });
+				}
+				else
+				{
+					onSuccess?.Invoke(dataResponse.Data);
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Got data === {JsonConvert.SerializeObject(dataResponse.Data)}");
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(GetData)}: {e}");
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting data." });
+			}
+		}
+
+		private async Task SetDataAsync (string key, string value, Action<object> onSuccess, Action<object> onFailure)
+		{
+			try
+			{
+				DataRequest request = new DataRequest
+				{
+					PlayerId = MyId,
+					Key = key,
+					Value = value,
+				};
+				string result = await Post("SetData", JsonConvert.SerializeObject(request));
+				DataResponse dataResponse = JsonConvert.DeserializeObject<DataResponse>(result);
+				if (dataResponse == null || dataResponse.IsError)
+				{
+					string message = dataResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(SetData)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message });
+				}
+				else
+				{
+					onSuccess?.Invoke("Data set successfully");
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Data set === {result}");
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(SetData)}: {e}");
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error setting data." });
+			}
+		}
+
+		private async Task GetBatchDataAsync (string query, Action<object> onSuccess, Action<object> onFailure)
+		{
+			try
+			{
+				DataBatchRequest request = new DataBatchRequest
+				{
+					PlayerId = MyId,
+					Query = query,
+				};
+				string result = await Post("GetBatchData", JsonConvert.SerializeObject(request));
+				DataBatchResponse dataResponse = JsonConvert.DeserializeObject<DataBatchResponse>(result);
+				if (dataResponse == null || dataResponse.IsError)
+				{
+					string message = dataResponse?.Message ?? "Server internal error";
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(GetBatchData)}: {message}");
+					onFailure?.Invoke(new NetworkError { Message = message });
+				}
+				else
+				{
+					onSuccess?.Invoke(dataResponse.Data);
+					Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Data batch got === {result}");
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.Log($"[{nameof(HttpFunctionsNetworkClient)}] Error in {nameof(GetBatchData)}: {e}");
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.Undefined, Message = "Error getting batch data." });
+			}
+		}
+	}
 }

@@ -7,27 +7,27 @@ using System.Threading.Tasks;
 namespace Kalkatos.Network
 {
 	public class AuthClient : IDisposable
-    {
-        private AuthUrls urls;
+	{
+		private AuthUrls urls;
 		private HttpClient client;
 		private string currentState;
 		private string playerId;
 		private string deviceId;
 
 		public AuthClient (AuthUrls urls, string playerId, string deviceId)
-        {
-            this.urls = urls;
+		{
+			this.urls = urls;
 			this.playerId = playerId;
 			this.deviceId = deviceId;
-            client = new HttpClient();
-        }
+			client = new HttpClient();
+		}
 
-        ~AuthClient () => Dispose();
+		~AuthClient () => Dispose();
 
 		public void Dispose () => client.Dispose();
 
-        public async Task RequestAuthUrl (Action<string> onSuccess, Action onFailure)
-        {
+		public async Task RequestAuthUrl (Action<string> onSuccess, Action onFailure)
+		{
 			string url = urls.GetAuthUrl;
 			var response = await client.GetAsync(url, HttpCompletionOption.ResponseContentRead);
 			string content = await response.Content.ReadAsStringAsync();
@@ -39,11 +39,11 @@ namespace Kalkatos.Network
 			}
 			currentState = ExtractStateFromUrl(content);
 			Logger.Log($"State is {currentState}");
-            onSuccess?.Invoke(content);
+			onSuccess?.Invoke(content);
 		}
 
-        public async Task RequestUserInfo (Action<UserInfo> onSuccess, Action<string> onFailure)
-        {
+		public async Task RequestUserInfo (Action<UserInfo> onSuccess, Action<string> onFailure)
+		{
 			var request = new AuthDataRequest
 			{
 				PlayerId = playerId,
@@ -57,7 +57,7 @@ namespace Kalkatos.Network
 			if (response.Status == "Concluded")
 			{
 				onSuccess?.Invoke(response.UserInfo);
-                return;
+				return;
 			}
 			onFailure?.Invoke(response.Message);
 		}

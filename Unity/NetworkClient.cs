@@ -19,6 +19,7 @@ namespace Kalkatos.Network.Unity
 	public class NetworkClient : MonoBehaviour
 	{
 		[SerializeField] private string gameName;
+		[SerializeField] private string gameVersion;
 		[SerializeField] private bool useLobby;
 		[SerializeField] private bool useLocal;
 		[SerializeField] private NetworkUrlSettings urlSettings_Local;
@@ -144,12 +145,17 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
+		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+			FindMatch(null, onSuccess, onFailure);
+		}
+
 		/// <summary>
 		/// Tries to find a match.
 		/// </summary>
 		/// <param screenName="onSuccess"> String with the word "Success". Poll with 'GetMatch' to retrieve information on the match whenever it is ready. </param>
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
-		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
+		public static void FindMatch (Dictionary<string, string> customData, Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -162,13 +168,13 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
-			Dictionary<string, string> customMatchmakingData = null;
 			if (instance.customData != null && instance.customData.Length > 0)
 			{
-				customMatchmakingData = new();
+				if (customData == null)
+					customData = new Dictionary<string, string>();
 				foreach (var item in instance.customData)
 				{
-					customMatchmakingData.Add(item.Key, item.Value);
+					customData.Add(item.Key, item.Value);
 				}
 			}
 			networkClient.FindMatch(
@@ -178,7 +184,7 @@ namespace Kalkatos.Network.Unity
 					PlayerId = playerId,
 					Region = playerRegion,
 					UseLobby = instance.useLobby,
-					CustomData = customMatchmakingData
+					CustomData = customData
 				},
 				(success) =>
 				{
@@ -339,32 +345,14 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void AddAsyncObject (string type, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
+		public static void StartMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
-			if (Application.internetReachability == NetworkReachability.NotReachable)
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
-				return;
-			}
-			if (string.IsNullOrEmpty(playerId))
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
-				return;
-			}
-			if (info == null)
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
-				return;
-			}
-			info.Author = nickname;
+			SendAction(new ActionInfo { PublicChanges = new() { { "StartMatch", "" } } }, onSuccess, onFailure);
+		}
 
-			AddAsyncObjectRequest request = new AddAsyncObjectRequest
-			{
-				Type = type,
-				PlayerId = playerId,
-				Info = info
-			};
-			asyncClient.AddAsyncObject(request,
+		public static void GetData (string key, string defaultValue, Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+			networkClient.GetData(key, defaultValue,
 				(success) =>
 				{
 					onSuccess?.Invoke((string)success);
@@ -375,35 +363,12 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static void GetAsyncObjects (string type, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
+		public static void SetData (string key, string value, Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
-			if (Application.internetReachability == NetworkReachability.NotReachable)
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
-				return;
-			}
-			if (string.IsNullOrEmpty(playerId))
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
-				return;
-			}
-			if (string.IsNullOrEmpty(type))
-			{
-				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
-				return;
-			}
-
-			AsyncObjectRequest request = new AsyncObjectRequest
-			{
-				Type = type,
-				Quantity = quantity,
-				Id = id
-			};
-			asyncClient.GetAsyncObjects(request,
+			networkClient.SetData(key, value,
 				(success) =>
 				{
-					AsyncObjectInfo[] objs = (AsyncObjectInfo[])success;
-					onSuccess?.Invoke(objs);
+					onSuccess?.Invoke((string)success);
 				},
 				(failure) =>
 				{
@@ -411,12 +376,98 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-		public static string GetDeviceIdentifier ()
+		public static void GetBatchData (string query, Action<Dictionary<string, string>> onSuccess, Action<NetworkError> onFailure)
 		{
+			networkClient.GetBatchData(query,
+				(success) =>
+				{
+					onSuccess?.Invoke((Dictionary<string, string>)success);
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
+
+        public static void AddAsyncObject (string type, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+                return;
+            }
+            if (string.IsNullOrEmpty(playerId))
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+                return;
+            }
+            if (info == null)
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+                return;
+            }
+            info.Author = nickname;
+            AddAsyncObjectRequest request = new AddAsyncObjectRequest
+            {
+                Type = type,
+                PlayerId = playerId,
+                Info = info
+            };
+            asyncClient.AddAsyncObject(request,
+                (success) =>
+                {
+                    onSuccess?.Invoke((string)success);
+                },
+                (failure) =>
+                {
+                    onFailure?.Invoke((NetworkError)failure);
+                });
+        }
+
+        public static void GetAsyncObjects (string type, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
+		{
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+                return;
+            }
+            if (string.IsNullOrEmpty(playerId))
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+                return;
+            }
+            if (string.IsNullOrEmpty(type))
+            {
+                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+                return;
+            }
+            AsyncObjectRequest request = new AsyncObjectRequest
+            {
+                Type = type,
+                Quantity = quantity,
+                Id = id
+            };
+            asyncClient.GetAsyncObjects(request,
+                (success) =>
+                {
+                    AsyncObjectInfo[] objs = (AsyncObjectInfo[])success;
+                    onSuccess?.Invoke(objs);
+                },
+                (failure) =>
+                {
+                    onFailure?.Invoke((NetworkError)failure);
+                });
+        }
+
+        // ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
+
+        private static string GetDeviceIdentifier ()
+		{
+			string deviceId;
 #if UNITY_WEBGL
-			string deviceId = GetLocalIdentifier();
+			deviceId = GetLocalIdentifier();
 #else
-			string deviceId = SystemInfo.deviceUniqueIdentifier;
+			deviceId = SystemInfo.deviceUniqueIdentifier;
 			if (deviceId == SystemInfo.unsupportedIdentifier)
 				deviceId = GetLocalIdentifier();
 #endif
