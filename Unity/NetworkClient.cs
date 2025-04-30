@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
-using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -145,9 +144,19 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
+		public static void FindMatch (string game, Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+			FindMatch(game, null, onSuccess, onFailure);
+		}
+
 		public static void FindMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
-			FindMatch(null, onSuccess, onFailure);
+			FindMatch(null, null, onSuccess, onFailure);
+		}
+
+		public static void FindMatch (Dictionary<string, string> customData, Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+			FindMatch(null, customData, onSuccess, onFailure);
 		}
 
 		/// <summary>
@@ -155,7 +164,7 @@ namespace Kalkatos.Network.Unity
 		/// </summary>
 		/// <param screenName="onSuccess"> String with the word "Success". Poll with 'GetMatch' to retrieve information on the match whenever it is ready. </param>
 		/// <param screenName="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
-		public static void FindMatch (Dictionary<string, string> customData, Action<string> onSuccess, Action<NetworkError> onFailure)
+		public static void FindMatch (string game, Dictionary<string, string> customData, Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -163,6 +172,8 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
+			if (string.IsNullOrEmpty(game))
+				game = instance.gameName;
 			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
@@ -180,7 +191,7 @@ namespace Kalkatos.Network.Unity
 			networkClient.FindMatch(
 				new FindMatchRequest
 				{
-					GameId = instance.gameName,
+					GameId = game,
 					PlayerId = playerId,
 					Region = playerRegion,
 					UseLobby = instance.useLobby,
@@ -196,12 +207,17 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
+		public static void GetMatch (string alias, Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
+		{
+			GetMatch(null, alias, onSuccess, onFailure);
+		}
+
 		/// <summary>
 		/// Poll to get info on a match if a FindMatch was called before. Or get info on current active match.
 		/// </summary>
 		/// <param name="onSuccess"> <typeparamref screenName="MatchInfo"/> object with info on the match. </param>
 		/// <param name="onFailure"> <typeparamref screenName="NetworkError"/> with info on what happened. </param>
-		public static void GetMatch (string alias, Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
+		public static void GetMatch (string game, string alias, Action<MatchInfo> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -209,6 +225,8 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
+			if (string.IsNullOrEmpty(game))
+				game = instance.gameName;
 			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
@@ -218,9 +236,9 @@ namespace Kalkatos.Network.Unity
 			networkClient.GetMatch(
 				new MatchRequest
 				{
+					GameId = game,
 					PlayerId = playerId,
 					MatchId = networkClient.MatchInfo?.MatchId,
-					GameId = instance.gameName,
 					Region = playerRegion,
 					Alias = alias
 				},
@@ -235,12 +253,17 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
+		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
+		{
+			LeaveMatch(null, onSuccess, onFailure);
+		}
+
 		/// <summary>
 		/// Leaves current match, or stops looking for a match if not matched yet.
 		/// </summary>
 		/// <param name="onSuccess"></param>
 		/// <param name="onFailure"></param>
-		public static void LeaveMatch (Action<string> onSuccess, Action<NetworkError> onFailure)
+		public static void LeaveMatch (string game, Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
 			if (Application.internetReachability == NetworkReachability.NotReachable)
 			{
@@ -248,6 +271,8 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 
+			if (string.IsNullOrEmpty(game))
+				game = instance.gameName;
 			if (string.IsNullOrEmpty(playerId))
 			{
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
@@ -256,7 +281,7 @@ namespace Kalkatos.Network.Unity
 			networkClient.LeaveMatch(
 				new MatchRequest 
 				{ 
-					GameId = instance.gameName, 
+					GameId = game, 
 					Region = playerRegion,
 					PlayerId = playerId,
 					MatchId = networkClient.MatchInfo?.MatchId ?? ""
