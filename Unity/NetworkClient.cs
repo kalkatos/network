@@ -125,8 +125,9 @@ namespace Kalkatos.Network.Unity
 				DeviceId = deviceId,
 				GameId = instance.gameName,
 				Region = playerRegion,
+				Version = instance.gameVersion,
 				MustAuthenticate = isAuthenticating
-            };
+			};
 
 			// Invoke network
 			networkClient.Connect(request,
