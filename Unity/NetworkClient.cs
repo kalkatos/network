@@ -41,12 +41,12 @@ namespace Kalkatos.Network.Unity
 		private string nicknameKey = "Nickname";
 		private UserInfo userInfo;
 
+		public static string GameName => instance.gameName;
 		public static string MyId => playerId;
 		public static bool IsConnected => networkClient.IsConnected;
 		public static PlayerInfo MyInfo => networkClient.MyInfo;
 		public static MatchInfo MatchInfo => networkClient.MatchInfo;
 		public static StateInfo StateInfo => networkClient.StateInfo;
-
 		public static Dictionary<string, string> GameSettings => networkClient.GameSettings;
 
 		private void Awake ()
@@ -233,13 +233,16 @@ namespace Kalkatos.Network.Unity
 				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
 				return;
 			}
+			string matchId = networkClient.MatchInfo?.MatchId;
+			if (!string.IsNullOrEmpty(matchId) && !matchId.StartsWith(game))
+				matchId = null;
 
-			networkClient.GetMatch(
+            networkClient.GetMatch(
 				new MatchRequest
 				{
 					GameId = game,
 					PlayerId = playerId,
-					MatchId = networkClient.MatchInfo?.MatchId,
+					MatchId = matchId,
 					Region = playerRegion,
 					Alias = alias
 				},

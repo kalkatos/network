@@ -6,7 +6,6 @@
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Build;
 
 namespace Kalkatos.Network.Unity.Editor
 {
@@ -17,13 +16,11 @@ namespace Kalkatos.Network.Unity.Editor
 
 		static NetworkUnityEditorDefiner ()
 		{
-			BuildTargetGroup targetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-			var namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(targetGroup);
-			string definesString = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
+			string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
 			List<string> allDefines = definesString.Split(';').ToList();
 			allDefines.AddRange(Symbols.Except(allDefines));
-			PlayerSettings.SetScriptingDefineSymbols(
-				namedBuildTarget,
+			PlayerSettings.SetScriptingDefineSymbolsForGroup(
+				EditorUserBuildSettings.selectedBuildTargetGroup,
 				string.Join(";", allDefines.ToArray()));
 		}
 	}
