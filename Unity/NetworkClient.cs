@@ -3,10 +3,10 @@
 
 #if UNITY_2018_1_OR_NEWER
 
-using System;
-using System.Collections.Generic;
 using Kalkatos.Network.Model;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -58,7 +58,7 @@ namespace Kalkatos.Network.Unity
 				Destroy(this);
 				return;
 			}
-			
+
 			var urls = urlSettings_Remote;
 #if UNITY_EDITOR
 			if (useLocal)
@@ -237,7 +237,7 @@ namespace Kalkatos.Network.Unity
 			if (!string.IsNullOrEmpty(matchId) && !matchId.StartsWith(game))
 				matchId = null;
 
-            networkClient.GetMatch(
+			networkClient.GetMatch(
 				new MatchRequest
 				{
 					GameId = game,
@@ -283,9 +283,9 @@ namespace Kalkatos.Network.Unity
 				return;
 			}
 			networkClient.LeaveMatch(
-				new MatchRequest 
-				{ 
-					GameId = game, 
+				new MatchRequest
+				{
+					GameId = game,
 					Region = playerRegion,
 					PlayerId = playerId,
 					MatchId = networkClient.MatchInfo?.MatchId ?? ""
@@ -418,79 +418,79 @@ namespace Kalkatos.Network.Unity
 				});
 		}
 
-        public static void AddAsyncObject (string type, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
+		public static void AddAsyncObject (string type, AsyncObjectInfo info, Action<string> onSuccess, Action<NetworkError> onFailure)
 		{
-            if (Application.internetReachability == NetworkReachability.NotReachable)
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
-                return;
-            }
-            if (string.IsNullOrEmpty(playerId))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
-                return;
-            }
-            if (info == null)
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
-                return;
-            }
-            info.Author = nickname;
-            AddAsyncObjectRequest request = new AddAsyncObjectRequest
-            {
-                Type = type,
-                PlayerId = playerId,
-                Info = info
-            };
-            asyncClient.AddAsyncObject(request,
-                (success) =>
-                {
-                    onSuccess?.Invoke((string)success);
-                },
-                (failure) =>
-                {
-                    onFailure?.Invoke((NetworkError)failure);
-                });
-        }
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
+			if (info == null)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+				return;
+			}
+			info.Author = nickname;
+			AddAsyncObjectRequest request = new AddAsyncObjectRequest
+			{
+				Type = type,
+				PlayerId = playerId,
+				Info = info
+			};
+			asyncClient.AddAsyncObject(request,
+				(success) =>
+				{
+					onSuccess?.Invoke((string)success);
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
 
-        public static void GetAsyncObjects (string type, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
+		public static void GetAsyncObjects (string type, string id, int quantity, Action<AsyncObjectInfo[]> onSuccess, Action<NetworkError> onFailure)
 		{
-            if (Application.internetReachability == NetworkReachability.NotReachable)
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
-                return;
-            }
-            if (string.IsNullOrEmpty(playerId))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
-                return;
-            }
-            if (string.IsNullOrEmpty(type))
-            {
-                onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
-                return;
-            }
-            AsyncObjectRequest request = new AsyncObjectRequest
-            {
-                Type = type,
-                Quantity = quantity,
-                Id = id
-            };
-            asyncClient.GetAsyncObjects(request,
-                (success) =>
-                {
-                    AsyncObjectInfo[] objs = (AsyncObjectInfo[])success;
-                    onSuccess?.Invoke(objs);
-                },
-                (failure) =>
-                {
-                    onFailure?.Invoke((NetworkError)failure);
-                });
-        }
+			if (Application.internetReachability == NetworkReachability.NotReachable)
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected });
+				return;
+			}
+			if (string.IsNullOrEmpty(playerId))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.NotConnected, Message = "Not connected. Connect first." });
+				return;
+			}
+			if (string.IsNullOrEmpty(type))
+			{
+				onFailure?.Invoke(new NetworkError { Tag = NetworkErrorTag.WrongParameters, Message = "Parameter is null." });
+				return;
+			}
+			AsyncObjectRequest request = new AsyncObjectRequest
+			{
+				Type = type,
+				Quantity = quantity,
+				Id = id
+			};
+			asyncClient.GetAsyncObjects(request,
+				(success) =>
+				{
+					AsyncObjectInfo[] objs = (AsyncObjectInfo[])success;
+					onSuccess?.Invoke(objs);
+				},
+				(failure) =>
+				{
+					onFailure?.Invoke((NetworkError)failure);
+				});
+		}
 
-        // ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
+		// ████████████████████████████████████████████ P R I V A T E ████████████████████████████████████████████
 
-        private static string GetDeviceIdentifier ()
+		private static string GetDeviceIdentifier ()
 		{
 			string deviceId;
 #if UNITY_WEBGL
